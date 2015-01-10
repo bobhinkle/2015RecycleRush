@@ -20,15 +20,6 @@ public class DriveTrain{
 	public static final int SIMPLE_DRIVE = 0;
 	public static final int STOPPED = 1;
 	
-	private double lfPower = 0.0;
-	private double lfDirection = 0.0;
-	private double rfPower = 0.0;
-	private double rfDirection = 0.0;
-	private double lrPower = 0.0;
-	private double lrDirection = 0.0;
-	private double rrPower = 0.0;
-	private double rrDirection = 0.0;
-	
 	private double xInput,yInput,rotateInput;
 	public DriveTrain(){
 		frontLeft = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE);
@@ -42,13 +33,6 @@ public class DriveTrain{
             instance = new DriveTrain();
         return instance;
     }
-	
-	public void driveVertical(double power){
-				
-	}
-	public void driveHorizontal(double power){
-		
-	}
 	public void sendInput(double x, double y, double rotate){
 		xInput = x;
 		yInput = y;
@@ -84,7 +68,7 @@ public class DriveTrain{
 			driveMotor.set(power);
 		}
 	}
-	private void run(){
+	private void update(){
 		//do pid calculation and apply power to each module
 		double A = xInput - rotateInput * (Constants.WHEELBASE_LENGTH / R);
         double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / R);
@@ -136,44 +120,4 @@ public class DriveTrain{
 		rearRight.setDriveSpeed(rearRightWheelSpeed);
 		
 	}
-	/*
-	private class Pod implements PIDOutput, PIDSource {
-
-        private Encoder steeringEnc;
-        private SpeedController drive;
-        private SpeedController steer;
-        private PIDController pid;
-
-        public Pod(int drivePWM, int steeringPWM, int steeringEncA,
-                int steeringEncB, int podNumber) {
-            steeringEnc = new Encoder(steeringEncA, steeringEncB);
-            steeringEnc.setDistancePerPulse(RobotMap.Constants.STEERING_ENC_REVOLUTIONS_PER_PULSE);
-            drive = new Victor(drivePWM);
-            steer = new Victor(steeringPWM);
-            pid = new PIDController(RobotMap.Constants.STEERING_PID_P,
-                    RobotMap.Constants.STEERING_PID_I,
-                    RobotMap.Constants.STEERING_PID_D, this, this);
-            SmartDashboard.putData("Steering Pod " + podNumber, pid);
-            pid.setInputRange(-180, 180);
-            pid.setContinuous(true);
-            pid.enable();
-
-        }
-
-        public void pidWrite(double output) {
-            steer.set(output);
-        }
-
-        public double pidGet() {
-            return steeringEnc.getDistance();
-        }
-
-        public void setSteeringAngle(double angle) {
-            pid.setSetpoint(angle);
-        }
-
-        public void setWheelSpeed(double speed) {
-            drive.set(speed);
-        }
-    }*/
 }
