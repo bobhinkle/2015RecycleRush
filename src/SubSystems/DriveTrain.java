@@ -3,6 +3,9 @@ package SubSystems;
 import Sensors.MA3;
 import Utilities.Constants;
 import Utilities.Ports;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Victor;
 
 public class DriveTrain{
@@ -51,25 +54,34 @@ public class DriveTrain{
 		yInput = y;
 		rotateInput = rotate;
 	}
-	private class SwerveDriveModule{
+	private class SwerveDriveModule implements PIDOutput, PIDSource{
 		private MA3 rotationMA3;
 		private Victor rotationMotor;
 		private Victor driveMotor;
-		
+		private PIDController pid;
 		public SwerveDriveModule(int ma3,int rotationMotorPort, int driveMotorPort){
 			rotationMA3 = new MA3(ma3);
 			rotationMotor = new Victor(rotationMotorPort);
 			driveMotor = new Victor(driveMotorPort);
+			pid = new PIDController(Constants.STEERING_P,
+                    Constants.STEERING_I,
+                    Constants.STEERING_D, this, this);
+            pid.setInputRange(-180, 180);
+            pid.setContinuous(true);
+            pid.enable();
+		}
+		@Override
+		public double pidGet() {
+			return rotationMA3.getAngle();
+		}
+
+		@Override
+		public void pidWrite(double output) {
+			rotationMotor.set(output);			
 		}
 		
-		public void rotateModule(double power){
-			rotationMotor.set(power);
-		}
-		public void moveModule(double power){
+		public void setDriveSpeed(double power){
 			driveMotor.set(power);
-		}
-		public double getAngle(){
-			return rotationMA3.getAngle();
 		}
 	}
 	private void run(){
@@ -94,11 +106,13 @@ public class DriveTrain{
         if (rearRightWheelSpeed > max) {
             max = rearRightWheelSpeed;
         }
-//        if(max>1){ws1/=max; ws2/=max; ws3/=max; ws4/=max;}
-        frontRightWheelSpeed /= max;
-        frontLeftWheelSpeed /= max;
-        rearLeftWheelSpeed /= max;
-        rearRightWheelSpeed /= max;
+        if(max>1){
+        	frontRightWheelSpeed /= max;
+            frontLeftWheelSpeed /= max;
+            rearLeftWheelSpeed /= max;
+            rearRightWheelSpeed /= max;
+        }
+        
         //find steering angles
         double frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI;
         double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
@@ -112,14 +126,14 @@ public class DriveTrain{
 				
 				break;
 		}
-		frontLeft.rotateModule(frontLeftSteeringAngle);
-		frontLeft.moveModule(frontLeftWheelSpeed);
-		frontRight.rotateModule(frontRightSteeringAngle);
-		frontRight.moveModule(frontRightWheelSpeed);
-		rearLeft.rotateModule(rearLeftSteeringAngle);
-		rearLeft.moveModule(rearLeftWheelSpeed);
-		rearRight.rotateModule(rearRightSteeringAngle);
-		rearRight.moveModule(rearRightWheelSpeed);
+		frontLeft.pidWrite(frontLeftSteeringAngle);
+		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
+		frontRight.pidWrite(frontRightSteeringAngle);
+		frontRight.setDriveSpeed(frontRightWheelSpeed);
+		rearLeft.pidWrite(rearLeftSteeringAngle);
+		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
+		rearRight.pidWrite(rearRightSteeringAngle);
+		rearRight.setDriveSpeed(rearRightWheelSpeed);
 		
 	}
 	/*

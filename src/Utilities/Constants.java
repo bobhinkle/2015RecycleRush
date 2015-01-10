@@ -18,14 +18,9 @@ public class Constants {
     //2 = Kinect with Blocker
     //3 = 2 Ball - Straight
     
-    public static final double TURN_KP = 0.0175; //0.020
-    public static final double TURN_KI = 0.000005;
-    public static final double TURN_KD = 0.00;//0.02
-    public static final double TURN_KFV = 0.00;
-    public static final double TURN_KFA = 0.00;
-    public static final double TURN_ON_TARGET_DEG = 1;
-    public static final double TURN_MAX_ACCEL = 90.0;
-    public static final double TURN_MAX_VEL = 90.0;
+    public static final double STEERING_P = 0.01; //0.0
+    public static final double STEERING_I = 0.0;  //
+    public static final double STEERING_D = 0.0;  //0.0
     
     public static final double DIST_KP = 0.04;
     public static final double DIST_KI = 0.0002; 
@@ -53,10 +48,8 @@ public class Constants {
     public static final double ELEVATOR_DOWN_P = 0.025; //0.003
     public static final double ELEVATOR_DOWN_I = 0.0001; 
     public static final double ELEVATOR_DOWN_D = 0.005;
-    public static final double ELEVATOR_AUTON_FLOOR_SHOT = 5.0;
-    public static final double ELEVATOR_SHOT = 12.0;
-    public static final double ELEVATOR_MIN_POWER = 0.0; //0.0 
-    public static final double ELEVATOR_MAX_POWER = 1.0; //0.75
+    public static final double ELEVATOR_MIN_POWER = 0.0; 
+    public static final double ELEVATOR_MAX_POWER = 1.0; 
     public static final double ELEVATOR_TOLERANCE = 0.0;
     
     public static final double DRIVE_DISTANCE_PER_PULSE = 0.0173135189727312*2;      //0.03420833;
