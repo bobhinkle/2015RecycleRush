@@ -45,9 +45,6 @@ public class Constants {
     public static final double STRAIGHT_KD = 0.0;
     public static final double DISTANCE_TOLERANCE = 1.0;
     
-    public static final int DRIVETRAIN_VERTICAL_POS = 0;
-    public static final int DRIVETRAIN_HORIZONTAL_POS = 90;
-    
     public static final double ELEVATOR_MAX_HEIGHT  = 12.5;   // MAXIMUM ELEVATOR HEIGHT 10
     public static final double ELEVATOR_MIN_HEIGHT  = -10;
     public static final double ELEVATOR_P = 0.295;
@@ -69,12 +66,7 @@ public class Constants {
     
     public static final int GYRO_INIT = 0;
     public static final int GYRO_READY  = 1;
-    public static final int INTAKEON = 3;
-    public static final int NOTREADYTOSHOOT = 4;
-    public static final int READYTOSHOOT    = 5;
     
-    public static final int LEFT_GOAL = 1;
-    public static final int RIGHT_GOAL = 2;
-    
-    public static final double AMBIENT_LIGHT = 350;
+    public static final double WHEELBASE_LENGTH = 10.0;
+    public static final double WHEELBASE_WIDTH  = 10.0;
 }
