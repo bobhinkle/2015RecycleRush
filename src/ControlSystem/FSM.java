@@ -1,12 +1,13 @@
 package ControlSystem;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class FSM {
 
 	private RoboSystem robot;
 	private static FSM instance = null;
-
+	private partsUpdate pu;
 	private int currentState = INIT;
     private int goalState = DEFAULT;
     
@@ -23,6 +24,8 @@ public class FSM {
         
     public FSM() {
         robot = RoboSystem.getInstance();
+        pu = new partsUpdate();
+        pu.start();
     }	
     public void setGoalState(int goal) {
         if(currentState == goal){
@@ -46,6 +49,18 @@ public class FSM {
         currentState = state;
     }
     	
+    private class partsUpdate extends Thread{
+        private boolean keepRunning = true;
+    	public void run(){
+    		while(keepRunning){
+    			System.out.println(robot.ahrs.getData());
+    			Timer.delay(0.02);
+    		}        	
+        }
+        public void kill(){
+        	keepRunning = false;
+        }
+    }
     
     public void run(){
         if(checkStateChange()){
