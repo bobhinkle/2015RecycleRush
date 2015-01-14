@@ -4,12 +4,10 @@ package ControlSystem;
 import Sensors.Arduino;
 import SubSystems.DriveTrain;
 import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 public class RoboSystem{
     
     private static RoboSystem instance = null;
-    public PowerDistributionPanel pdp = new PowerDistributionPanel();
     private Compressor comp;
     public DriveTrain dt;
     public Arduino ahrs;

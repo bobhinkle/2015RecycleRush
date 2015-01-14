@@ -34,7 +34,6 @@ public class FSM {
         }else{
             goalState = goal;
         }
-        run();
     }
     private boolean checkStateChange(){
         if(goalState != currentState){
@@ -52,8 +51,10 @@ public class FSM {
     private class partsUpdate extends Thread{
         private boolean keepRunning = true;
     	public void run(){
+    		System.out.println("Started");
     		while(keepRunning){
-    			System.out.println(robot.ahrs.getData());
+    			SmartDashboard.putString("AHRS", robot.ahrs.getData());
+    			update();
     			Timer.delay(0.02);
     		}        	
         }
@@ -62,13 +63,16 @@ public class FSM {
         }
     }
     
-    public void run(){
+    public void update(){
         if(checkStateChange()){
             switch(goalState){
                 case INIT:
                     SmartDashboard.putString("FSM_STATE", "INIT");
                     stateComplete(FSM.INIT);
                     break;
+                case DEFAULT:
+                	
+                	break;
             }
         }
     }

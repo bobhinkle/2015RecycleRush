@@ -3,10 +3,12 @@ package SubSystems;
 import Sensors.MA3;
 import Utilities.Constants;
 import Utilities.Ports;
+import Utilities.Util;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveTrain{
 	private static DriveTrain instance = null;
@@ -21,11 +23,12 @@ public class DriveTrain{
 	public static final int STOPPED = 1;
 	
 	private double xInput,yInput,rotateInput;
+	
 	public DriveTrain(){
-		frontLeft = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE);
-		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE);
-		rearLeft = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE);
-		rearRight = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE);
+		frontLeft = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
+		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
+		rearLeft = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3);
+		rearRight = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
 	}
 	public static DriveTrain getInstance()
     {
@@ -37,30 +40,45 @@ public class DriveTrain{
 		xInput = x;
 		yInput = y;
 		rotateInput = rotate;
+		update();
 	}
 	private class SwerveDriveModule implements PIDOutput, PIDSource{
 		private MA3 rotationMA3;
 		private Victor rotationMotor;
 		private Victor driveMotor;
-		private PIDController pid;
-		public SwerveDriveModule(int ma3,int rotationMotorPort, int driveMotorPort){
+		public PIDController pid;
+		private int moduleID;
+		private String dashboardNameAngle;
+		private String dashboardNamePower;
+		private String dashboardNameGoal;
+		public SwerveDriveModule(int ma3,int rotationMotorPort, int driveMotorPort,int moduleNum){
 			rotationMA3 = new MA3(ma3);
 			rotationMotor = new Victor(rotationMotorPort);
 			driveMotor = new Victor(driveMotorPort);
+			moduleID = moduleNum;
+			dashboardNameAngle = "WheelAngle" + Integer.toString(moduleID);
+			dashboardNamePower = "WheelRotationPower" + Integer.toString(moduleID);
+			dashboardNameGoal = "WheelRotationGoal" + Integer.toString(moduleID);
 			pid = new PIDController(Constants.STEERING_P,
                     Constants.STEERING_I,
                     Constants.STEERING_D, this, this);
             pid.setInputRange(-180, 180);
+            pid.setOutputRange(-0.5, 0.5);
             pid.setContinuous(true);
             pid.enable();
+            pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rotationMA3.getAngle()));
 		}
 		@Override
 		public double pidGet() {
-			return rotationMA3.getAngle();
+			double angle = rotationMA3.getAngle();
+			SmartDashboard.putNumber(dashboardNameAngle,Util.boundAngleNeg180to180Degrees(angle));
+			SmartDashboard.putNumber(dashboardNameGoal, pid.getSetpoint());
+			return Util.boundAngleNeg180to180Degrees(angle);
 		}
 
 		@Override
 		public void pidWrite(double output) {
+			SmartDashboard.putNumber(dashboardNamePower, output);
 			rotationMotor.set(output);			
 		}
 		
@@ -102,22 +120,35 @@ public class DriveTrain{
         double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
         double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
         double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-		switch(DRIVE_STYLE){
-			case STOPPED:
-			
-				break;
-			case SIMPLE_DRIVE:
-				
-				break;
-		}
-		frontLeft.pidWrite(frontLeftSteeringAngle);
-		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
-		frontRight.pidWrite(frontRightSteeringAngle);
-		frontRight.setDriveSpeed(frontRightWheelSpeed);
-		rearLeft.pidWrite(rearLeftSteeringAngle);
-		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
-		rearRight.pidWrite(rearRightSteeringAngle);
-		rearRight.setDriveSpeed(rearRightWheelSpeed);
+        
+        if(frontLeftSteeringAngle < -170.0 || frontLeftSteeringAngle > 170.0){
+        	frontLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle + 180.0));
+    		frontLeft.setDriveSpeed(-frontLeftWheelSpeed);
+        }else{
+        	frontLeft.pid.setSetpoint(frontLeftSteeringAngle);
+    		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
+        }
+        if(frontRightSteeringAngle < -170.0 || frontRightSteeringAngle > 170.0){
+        	frontRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontRightSteeringAngle + 180.0));
+    		frontRight.setDriveSpeed(-frontRightWheelSpeed);
+        }else{
+        	frontRight.pid.setSetpoint(frontRightSteeringAngle);
+    		frontRight.setDriveSpeed(frontRightWheelSpeed);
+        }
+        if(rearLeftSteeringAngle < -170.0 || rearLeftSteeringAngle > 170.0){
+        	rearLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearLeftSteeringAngle + 180.0));
+    		rearLeft.setDriveSpeed(-rearLeftWheelSpeed);
+        }else{
+        	rearLeft.pid.setSetpoint(rearLeftSteeringAngle);
+    		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
+        }
+        if(rearRightSteeringAngle < -170.0 || rearRightSteeringAngle > 170.0){
+        	rearRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearRightSteeringAngle + 180.0));
+    		rearRight.setDriveSpeed(-rearRightWheelSpeed);
+        }else{
+        	rearRight.pid.setSetpoint(rearRightSteeringAngle);
+    		rearRight.setDriveSpeed(rearRightWheelSpeed);
+        }
 		
 	}
 }

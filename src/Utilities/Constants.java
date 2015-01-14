@@ -1,24 +1,16 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package Utilities;
 
 /**
  *
- * @author xpsl05x
+ * @author Rohi Zacharia
  */
 public class Constants {
     
     public static final boolean LOW_GEAR  = true; // Drivetrain low gear
     public static final double MIN_DT_POWER = 0.2;
     public static final int autonSelect = 2;
-    //0 = 2 Ball - Turn with Kinect
-    //1 = 1 Ball from CVR
-    //2 = Kinect with Blocker
-    //3 = 2 Ball - Straight
     
-    public static final double STEERING_P = 0.01; //0.0
+    public static final double STEERING_P = 0.015; //0.0
     public static final double STEERING_I = 0.0;  //
     public static final double STEERING_D = 0.0;  //0.0
     
@@ -60,6 +52,8 @@ public class Constants {
     public static final int GYRO_INIT = 0;
     public static final int GYRO_READY  = 1;
     
-    public static final double WHEELBASE_LENGTH = 10.0;
-    public static final double WHEELBASE_WIDTH  = 10.0;
+    public static final double WHEELBASE_LENGTH = 25.0;
+    public static final double WHEELBASE_WIDTH  = 20.0;
+    
+    public static final double POWER_STALL = 10.0;
 }

@@ -1,6 +1,4 @@
-package IO;
-
-import ControlSystem.FSM;
+package IO;import ControlSystem.FSM;
 import ControlSystem.RoboSystem;
 
 /** Handles the input from an xbox controller in order to calculate what the
@@ -19,8 +17,9 @@ public class TeleController
     private static TeleController instance = null;
     public TeleController(){
 
-        driver = new Xbox(1);
-        codriver  = new Xbox(2);
+        driver = new Xbox(0);
+        codriver  = new Xbox(1);
+        robot = RoboSystem.getInstance();
     }
     public static TeleController getInstance(){
         if(instance == null){
@@ -33,17 +32,17 @@ public class TeleController
         fsm = FSM.getInstance();
     }
     
-    public void coPilot(){
+    public void coDriver(){
         if(codriver.getAButton()){
-            
+        	
         }
         //////////////////////////////////////////
         if(codriver.getBButton()){
-            
+        	
         }
         ////////////////////////////////////////
         if(codriver.getXButton()){
-            
+        	
         }
         ///////////////////////////////////////
         if(codriver.getYButton()){
@@ -108,7 +107,7 @@ public class TeleController
         }
     }
     
-    public void driveUpdate() {
+    public void driver() {
 
        
         
@@ -134,9 +133,11 @@ public class TeleController
         if(driver.getRawButton(3)){
         	
         }
-        
-
+        robot.dt.sendInput(driver.getLeftStickX(), driver.getLeftStickY(), driver.getRightStickX());
     }
-    
+    public void update(){
+    	coDriver();
+    	driver();
+    }
     
 }
