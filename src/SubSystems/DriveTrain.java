@@ -18,17 +18,14 @@ public class DriveTrain{
 	private SwerveDriveModule rearLeft;
 	private SwerveDriveModule rearRight;
 	private static double R = Math.sqrt(Math.pow(Constants.WHEELBASE_LENGTH,2.0) + Math.pow(Constants.WHEELBASE_WIDTH,2.0))/2.0;
-	private int DRIVE_STYLE = DriveTrain.SIMPLE_DRIVE;
-	public static final int SIMPLE_DRIVE = 0;
-	public static final int STOPPED = 1;
 	
 	private double xInput,yInput,rotateInput;
 	
 	public DriveTrain(){
-		frontLeft = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
+		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
-		rearLeft = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3);
-		rearRight = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
+		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3);
+		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
 	}
 	public static DriveTrain getInstance()
     {
@@ -97,7 +94,7 @@ public class DriveTrain{
         double frontLeftWheelSpeed = Math.sqrt((B * B) + (D * D));
         double rearLeftWheelSpeed = Math.sqrt((A * A) + (D * D));
         double rearRightWheelSpeed = Math.sqrt((A * A) + (C * C));
-      //normalize wheel speeds
+        //normalize wheel speeds
         double max = frontRightWheelSpeed;
         if (frontLeftWheelSpeed > max) {
             max = frontLeftWheelSpeed;
@@ -108,7 +105,7 @@ public class DriveTrain{
         if (rearRightWheelSpeed > max) {
             max = rearRightWheelSpeed;
         }
-        if(max>1){
+        if(max > 1.0){
         	frontRightWheelSpeed /= max;
             frontLeftWheelSpeed /= max;
             rearLeftWheelSpeed /= max;
@@ -149,6 +146,5 @@ public class DriveTrain{
         	rearRight.pid.setSetpoint(rearRightSteeringAngle);
     		rearRight.setDriveSpeed(rearRightWheelSpeed);
         }
-		
 	}
 }

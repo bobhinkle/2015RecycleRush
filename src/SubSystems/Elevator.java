@@ -16,9 +16,9 @@ public class Elevator extends SynchronousPID implements Controller
     
     private double goalPosition;
     private boolean isOnTarget = false;
-    private static final int onTargetThresh = 25;
+    private static final int onTargetThresh = 75;
     private int onTargetCounter = onTargetThresh;
-    public static double kOnTargetToleranceInches = Constants.DISTANCE_TOLERANCE;
+    public static double kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
     public static final double kLoopRate = 200.0;
 
     private static Elevator instance = null;
@@ -33,8 +33,8 @@ public class Elevator extends SynchronousPID implements Controller
     {
         loadProperties();
         drive = new Victor(Ports.ELEVATOR);
-        eleEnc = new SuperEncoder(Ports.ELEVATOR_ENC,Ports.ELEVATOR_ENC+1,false,2);//comp false
-        eleEnc.setPIDReturn(1);
+        eleEnc = new SuperEncoder(Ports.ELEVATOR_ENC,Ports.ELEVATOR_ENC+1,true,SuperEncoder.HIGH_RESOLUTION);//comp false
+        eleEnc.setPIDReturn(SuperEncoder.PID_DISTANCE);
         eleEnc.setDistancePerPulse(Constants.ELEVATOR_DISTANCE_PER_PULSE);
         eleEnc.start();
         limitSwitch = new DigitalInput(Ports.ELEVATOR_BOTTOM_LIMIT);
@@ -62,6 +62,7 @@ public class Elevator extends SynchronousPID implements Controller
     public boolean checkLimit(){
         if(!limitSwitch.get()){
                eleEnc.reset();
+               isOnTarget = true;
                return true;
         }else{
             return false;
@@ -161,7 +162,9 @@ public class Elevator extends SynchronousPID implements Controller
         drive.set(power);
         SmartDashboard.putNumber("ELE_HEIGHT", current);
         SmartDashboard.putNumber("ELE_GOAL", goalPosition);
+        SmartDashboard.putNumber("ELE_TRUE_HEIGHT", current - Constants.ELEVATOR_CORRECTION);
         SmartDashboard.putNumber("ELE_POWER", power);
+//        SmartDashboard.putNumber("ELE_RAW", eleEnc.getRaw());
         SmartDashboard.putNumber("ELE_P", this.getP());
         SmartDashboard.putNumber("ELE_I", this.getI());
         SmartDashboard.putNumber("ELE_D", this.getD());

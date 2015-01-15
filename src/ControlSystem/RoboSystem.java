@@ -3,6 +3,7 @@ package ControlSystem;
 
 import Sensors.Arduino;
 import SubSystems.DriveTrain;
+import SubSystems.Elevator;
 import edu.wpi.first.wpilibj.Compressor;
 
 public class RoboSystem{
@@ -11,6 +12,7 @@ public class RoboSystem{
     private Compressor comp;
     public DriveTrain dt;
     public Arduino ahrs;
+    public Elevator elevator;
     public static RoboSystem getInstance()
     {
         if( instance == null )
@@ -23,6 +25,7 @@ public class RoboSystem{
     	comp.setClosedLoopControl(true);
     	dt = DriveTrain.getInstance();
     	ahrs = Arduino.getInstance();
+    	elevator = Elevator.getInstance();
     }
     
 }

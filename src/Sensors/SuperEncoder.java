@@ -18,15 +18,19 @@ public class SuperEncoder implements PIDSource {
     public double rpm = 0.0;      
     private int pidReturn = 0;
     private double checkDiff = 0;
+    public final static int PID_RPM = 0;
+    public final static int PID_DISTANCE = 1;
+    public final static int LOW_RESOLUTION = 1;
+    public final static int HIGH_RESOLUTION = 2;
     public SuperEncoder(int aChannel, int bChannel,boolean reverseDirection,int type) {
             // TODO Auto-generated constructor stub
         switch(type){
-            case 1:
+            case LOW_RESOLUTION:
                 pidReturn = 1;
                 enc = new Encoder(aChannel,bChannel,reverseDirection,EncodingType.k2X);
                 enc.setSamplesToAverage((byte)100);
                 break;
-            case 2:
+            case HIGH_RESOLUTION:
                 pidReturn = 0;
                 enc = new Encoder(aChannel,bChannel,reverseDirection,EncodingType.k4X);
                 break;
@@ -38,9 +42,9 @@ public class SuperEncoder implements PIDSource {
     public double pidGet() {
         update();
         switch(pidReturn){
-            case 0:
+            case PID_RPM:
                 return getRPM();
-            case 1:
+            case PID_DISTANCE:
                 return getDistance();
             default:
                 return getDistance();

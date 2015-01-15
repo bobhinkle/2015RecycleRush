@@ -12,26 +12,22 @@ public class TeleController
     public static final double STICK_DEAD_BAND = 0.1;
 
     private Xbox codriver,driver;
-    private RoboSystem robot;
     private FSM fsm;
+    private RoboSystem robot;
     private static TeleController instance = null;
     public TeleController(){
-
         driver = new Xbox(0);
         codriver  = new Xbox(1);
         robot = RoboSystem.getInstance();
+        fsm = FSM.getInstance();
+        System.out.println("CONTROLS STARTED");
     }
     public static TeleController getInstance(){
         if(instance == null){
             instance = new TeleController();
         }
         return instance;
-    }
-    public void loadSubsystems(){
-        robot = RoboSystem.getInstance();
-        fsm = FSM.getInstance();
-    }
-    
+    }    
     public void coDriver(){
         if(codriver.getAButton()){
         	
@@ -109,30 +105,47 @@ public class TeleController
     
     public void driver() {
 
-       
-        
-        if(driver.getRawButton(5)){
+    	if(driver.getAButton()){
+        	fsm.setGoalState(FSM.PRE_TOTE);
+        }
+        //////////////////////////////////////////
+        if(driver.getBButton()){
+        	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE
+        }
+        ////////////////////////////////////////
+        if(driver.getXButton()){
         	
         }
-        if(driver.getRawButton(10)){
+        ///////////////////////////////////////
+        if(driver.getYButton()){
+           
+        }
+        /////////////////////////////////////////////
+
+        if(driver.getRightTrigger()){ 
             
         }
-        
-        if(driver.getRawButton(11)){
-            
+        //////////////////////////////////
+        if(driver.getRightBumper()) {
+           
         }
-        if(driver.getRawButton(8)){ //left 7
-         
-        }
-        if(driver.getRawButton(6)){
-            
-        }
-        if (driver.getRawButton(1)){
+        ///////////////////////////////////////////////////////
+        if(driver.getLeftTrigger()){
         	
         }
-        if(driver.getRawButton(3)){
+        //////////////////////////////////////////////////////////////////// 
+        if(driver.getLeftBumper()){ //reverse rollers
+            
+        }
+        //////////////////////////////////////////////////////
+        if(driver.getBackButton()){  // stop all 
+          
+        }
+        ////////////////////////////////////////////////////////
+        if(driver.getStartButton()){
         	
         }
+
         robot.dt.sendInput(driver.getLeftStickX(), driver.getLeftStickY(), driver.getRightStickX());
     }
     public void update(){

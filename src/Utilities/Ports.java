@@ -20,12 +20,12 @@ public class Ports {
     public static final int REAR_RIGHT_ROTATION        = 5;
     public static final int REAR_LEFT_DRIVE        = 6;
     public static final int REAR_LEFT_ROTATION        = 7;
-    public static final int ELEVATOR        = 8;
-    public static final int MOTOR9        = 9;
+    public static final int ELEVATOR        = 9;
     
     //DIGITAL INPUTS
-    public static final int ELEVATOR_ENC = 1; //1 AND 2
-    public static final int ELEVATOR_BOTTOM_LIMIT = 3;
+    public static final int ELEVATOR_BOTTOM_LIMIT = 0;
+    public static final int ELEVATOR_TOP_LIMIT = 1;
+    public static final int ELEVATOR_ENC = 2; //1 AND 2
     //ANALOG INPUTS
     
     public static final int FRONT_RIGHT_MA3 = 0;
