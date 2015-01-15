@@ -82,6 +82,9 @@ public class DriveTrain{
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
 		}
+		public double getCurrentAngle(){
+			return rotationMA3.getAngle();
+		}
 	}
 	private void update(){
 		//do pid calculation and apply power to each module
@@ -118,33 +121,49 @@ public class DriveTrain{
         double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
         double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
         
-        if(frontLeftSteeringAngle < -170.0 || frontLeftSteeringAngle > 170.0){
-        	frontLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle + 180.0));
-    		frontLeft.setDriveSpeed(-frontLeftWheelSpeed);
-        }else{
+        if(shortestPath(frontLeft.getCurrentAngle(),frontLeftSteeringAngle)){
         	frontLeft.pid.setSetpoint(frontLeftSteeringAngle);
     		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
-        }
-        if(frontRightSteeringAngle < -170.0 || frontRightSteeringAngle > 170.0){
-        	frontRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontRightSteeringAngle + 180.0));
-    		frontRight.setDriveSpeed(-frontRightWheelSpeed);
         }else{
+        	frontLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle + 180.0));
+    		frontLeft.setDriveSpeed(-frontLeftWheelSpeed);
+        }
+        if(shortestPath(frontRight.getCurrentAngle(),frontRightSteeringAngle)){
         	frontRight.pid.setSetpoint(frontRightSteeringAngle);
     		frontRight.setDriveSpeed(frontRightWheelSpeed);
-        }
-        if(rearLeftSteeringAngle < -170.0 || rearLeftSteeringAngle > 170.0){
-        	rearLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearLeftSteeringAngle + 180.0));
-    		rearLeft.setDriveSpeed(-rearLeftWheelSpeed);
         }else{
+        	frontRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontRightSteeringAngle + 180.0));
+    		frontRight.setDriveSpeed(-frontRightWheelSpeed);
+        }
+        if(shortestPath(rearLeft.getCurrentAngle(),rearLeftSteeringAngle)){
         	rearLeft.pid.setSetpoint(rearLeftSteeringAngle);
     		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
-        }
-        if(rearRightSteeringAngle < -170.0 || rearRightSteeringAngle > 170.0){
-        	rearRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearRightSteeringAngle + 180.0));
-    		rearRight.setDriveSpeed(-rearRightWheelSpeed);
         }else{
+        	rearLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearLeftSteeringAngle + 180.0));
+    		rearLeft.setDriveSpeed(-rearLeftWheelSpeed);
+        }
+        if(shortestPath(rearRight.getCurrentAngle(),rearRightSteeringAngle)){
         	rearRight.pid.setSetpoint(rearRightSteeringAngle);
     		rearRight.setDriveSpeed(rearRightWheelSpeed);
+        }else{
+        	rearRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearRightSteeringAngle + 180.0));
+        	rearRight.setDriveSpeed(-rearRightWheelSpeed);
         }
+	}
+	
+	public boolean shortestPath(double current, double goal){
+		double C1 = current + 180.0;
+		double G1, G2;
+		G1 = goal + 180;
+		if(goal >= 0){
+			G2 = goal;
+		}else{
+			G2 = G1 + 180;
+		}
+		if(Math.abs(C1 - G1) < Math.abs(C1 - G2)){
+			return true;
+		}else{
+			return false;
+		}
 	}
 }

@@ -28,26 +28,25 @@ public class Constants {
     public static final double STRAIGHT_KI = 0.0;
     public static final double STRAIGHT_KD = 0.0;
     
-    public static final double DISTANCE_TOLERANCE = 0.2;
-    
+    public static final double DISTANCE_TOLERANCE = 0.2; //auton distance pid
+    ////////////////////////////////////////////////////////////////////////////////////////////
     public static final double ELEVATOR_MAX_HEIGHT  = 57.0;   // MAXIMUM ELEVATOR HEIGHT 10
     public static final double ELEVATOR_MIN_HEIGHT  = -10;
     public static final double ELEVATOR_DISTANCE_PER_PULSE = (56/20780.0)*4.0;
     public static final double ELEVATOR_CORRECTION = -0.5;
-    public static final double ELEVATOR_P = 1.5;
+    public static final double ELEVATOR_P = 1.2;
     public static final double ELEVATOR_I = 0.000;
-    public static final double ELEVATOR_D = 0.000;
+    public static final double ELEVATOR_D = 0.800;
     public static final double ELEVATOR_DOWN_P = 0.025; //0.003
     public static final double ELEVATOR_DOWN_I = 0.0001; 
     public static final double ELEVATOR_DOWN_D = 0.005;
     public static final double ELEVATOR_MIN_POWER = 0.0; 
     public static final double ELEVATOR_MAX_POWER = 1.0; 
-    public static final double ELEVATOR_TOLERANCE = 0.3;
-    
+    public static final double ELEVATOR_TOLERANCE = 0.1;
     public static final double ELEVATOR_INDEX_STATIONARY = 16.8 + ELEVATOR_CORRECTION;
     public static final double ELEVATOR_INDEX_PRE_TOTE = 8.0  + ELEVATOR_CORRECTION;
     public static final double ELEVATOR_INDEX_LOADED = ELEVATOR_MIN_HEIGHT  + ELEVATOR_CORRECTION;
-    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     public static final double DRIVE_DISTANCE_PER_PULSE = 0.0173135189727312*2;      //0.03420833;
     public static final double VOLTS_TO_PSI = 53.18;
     

@@ -78,17 +78,20 @@ public class FSM {
                     break;
                 case PRE_TOTE:
                 	SmartDashboard.putString("FSM_STATE", "FLOOR_PICKUP");
+                	robot.elevator.setOnTargetThreshHold(40);
                 	robot.elevator.setGoal(Constants.ELEVATOR_INDEX_PRE_TOTE);
                 	stateComplete(FSM.PRE_TOTE);
                 	break;
                 case LOAD_TOTE:   //START LOAD TOTE SEQUENCE STEP 1
                 	SmartDashboard.putString("FSM_STATE", "BOTTOM");
+                	robot.elevator.setOnTargetThreshHold(25);
                 	robot.elevator.setGoal(Constants.ELEVATOR_INDEX_LOADED);
                 	setGoalState(FSM.LOAD_TOTE_WAITING);
                 	break;
                 case LOAD_TOTE_WAITING: //LOAD TOTE SEQUENCE STEP 2
                 	SmartDashboard.putString("FSM_STATE", "LOAD_TOTE_WAITING");
                 	if(robot.elevator.onTarget()){
+                		robot.elevator.setOnTargetThreshHold(50);
                 		robot.elevator.setGoal(Constants.ELEVATOR_INDEX_STATIONARY);
                 		setGoalState(FSM.LOAD_TOTE_STATIONARY_WAITING);
                 	}

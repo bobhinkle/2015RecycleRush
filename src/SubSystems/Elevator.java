@@ -16,7 +16,7 @@ public class Elevator extends SynchronousPID implements Controller
     
     private double goalPosition;
     private boolean isOnTarget = false;
-    private static final int onTargetThresh = 75;
+    private int onTargetThresh = 50;
     private int onTargetCounter = onTargetThresh;
     public static double kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
     public static final double kLoopRate = 200.0;
@@ -189,5 +189,8 @@ public class Elevator extends SynchronousPID implements Controller
         this.setPID(kp, ki, kd);
         this.setInputRange(Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT);
         kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
+    }
+    public void setOnTargetThreshHold(int threshHold){
+    	onTargetThresh = threshHold;
     }
 }
