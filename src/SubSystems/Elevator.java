@@ -19,7 +19,6 @@ public class Elevator extends SynchronousPID implements Controller
     private int onTargetThresh = 50;
     private int onTargetCounter = onTargetThresh;
     public static double kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
-    public static final double kLoopRate = 200.0;
 
     private static Elevator instance = null;
     public static Elevator getInstance()
@@ -126,9 +125,7 @@ public class Elevator extends SynchronousPID implements Controller
     public synchronized void run()
     {
         checkLimit();
-        double current = eleEnc.getDistance();
-        double difference = this.getSetpoint() - current;
-        
+        double current = eleEnc.getDistance();        
         double calPower = this.calculate(current);
         double power = Util.pidPower(-calPower, -Math.abs(Constants.ELEVATOR_MIN_POWER), -Math.abs(Constants.ELEVATOR_MAX_POWER),Math.abs(Constants.ELEVATOR_MIN_POWER), Math.abs(Constants.ELEVATOR_MAX_POWER));
         

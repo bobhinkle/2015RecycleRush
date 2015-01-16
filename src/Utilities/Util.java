@@ -158,4 +158,9 @@ public class Util {
             x = from_max;
         return ((x-from_min)*(to_max-to_min)/(from_max-from_min)) + to_min;
     }
+    public static double normalize(double current, double test){
+    	if(current > test)
+    		return current;
+    	return test;
+    }
 }

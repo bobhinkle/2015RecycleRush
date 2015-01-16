@@ -4,9 +4,6 @@ import Sensors.MA3;
 import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
-import edu.wpi.first.wpilibj.PIDController;
-import edu.wpi.first.wpilibj.PIDOutput;
-import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -39,16 +36,18 @@ public class DriveTrain{
 		rotateInput = rotate;
 		update();
 	}
-	private class SwerveDriveModule implements PIDOutput, PIDSource{
+	private class SwerveDriveModule extends SynchronousPID implements Controller{
 		private MA3 rotationMA3;
 		private Victor rotationMotor;
 		private Victor driveMotor;
-		public PIDController pid;
 		private int moduleID;
 		private String dashboardNameAngle;
 		private String dashboardNamePower;
 		private String dashboardNameGoal;
+		private double goalPosition;
+		private boolean reversePower = false;
 		public SwerveDriveModule(int ma3,int rotationMotorPort, int driveMotorPort,int moduleNum){
+			loadProperties();
 			rotationMA3 = new MA3(ma3);
 			rotationMotor = new Victor(rotationMotorPort);
 			driveMotor = new Victor(driveMotorPort);
@@ -56,35 +55,69 @@ public class DriveTrain{
 			dashboardNameAngle = "WheelAngle" + Integer.toString(moduleID);
 			dashboardNamePower = "WheelRotationPower" + Integer.toString(moduleID);
 			dashboardNameGoal = "WheelRotationGoal" + Integer.toString(moduleID);
-			pid = new PIDController(Constants.STEERING_P,
-                    Constants.STEERING_I,
-                    Constants.STEERING_D, this, this);
-            pid.setInputRange(-180, 180);
-            pid.setOutputRange(-0.5, 0.5);
-            pid.setContinuous(true);
-            pid.enable();
-            pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rotationMA3.getAngle()));
+            goalPosition = Util.boundAngleNeg180to180Degrees(rotationMA3.getAngle());            
 		}
-		@Override
-		public double pidGet() {
-			double angle = rotationMA3.getAngle();
-			SmartDashboard.putNumber(dashboardNameAngle,Util.boundAngleNeg180to180Degrees(angle));
-			SmartDashboard.putNumber(dashboardNameGoal, pid.getSetpoint());
-			return Util.boundAngleNeg180to180Degrees(angle);
-		}
-
-		@Override
-		public void pidWrite(double output) {
-			SmartDashboard.putNumber(dashboardNamePower, output);
-			rotationMotor.set(output);			
-		}
-		
-		public void setDriveSpeed(double power){
-			driveMotor.set(power);
+		public synchronized void setGoal(double goalAngle)
+	    {
+			if(shortestPath(getCurrentAngle(),goalAngle)){
+				reversePower = false;
+				this.setSetpoint(goalAngle);
+		        goalPosition = goalAngle;
+			}else{
+				reversePower = true;
+				goalPosition = Util.boundAngleNeg180to180Degrees(goalAngle + 180.0);
+				this.setSetpoint(goalPosition);		        
+			}	        
+	    }
+	    public final void loadProperties()
+	    {
+	        double kp = Constants.STEERING_P;
+	        double ki = Constants.STEERING_I;
+	        double kd = Constants.STEERING_D;
+	        this.setPID(kp, ki, kd);
+	        this.setInputRange(-180.0,180.0);
+            this.setOutputRange(-0.5,0.5);
+            this.setContinuous(true);
+	    }public void setDriveSpeed(double power){
+	    	if(reversePower)
+	    		driveMotor.set(-power);
+	    	else
+	    		driveMotor.set(power);
 		}
 		public double getCurrentAngle(){
 			return rotationMA3.getAngle();
 		}
+		@Override
+		public void run() {   
+			double angle = getCurrentAngle();
+	        double calPower = this.calculate(angle);
+	        SmartDashboard.putNumber(dashboardNamePower, calPower);
+	        SmartDashboard.putNumber(dashboardNameAngle,Util.boundAngleNeg180to180Degrees(angle));
+	        SmartDashboard.putNumber(dashboardNameGoal,goalPosition);
+			rotationMotor.set(calPower);	
+		}
+		@Override
+		public boolean onTarget() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+		//find shortest path. reverse motor power if shortest distance is 180 degress from goal
+		private boolean shortestPath(double current, double goal){
+			double C1 = current + 180.0;
+			double G1, G2;
+			G1 = goal + 180;
+			if(goal >= 0)
+				G2 = goal;
+			else
+				G2 = G1 + 180;
+			return Math.abs(C1 - G1) < Math.abs(C1 - G2);
+		}
+	}
+	public void run(){
+		frontLeft.run();
+		frontRight.run();
+		rearLeft.run();
+		rearRight.run();
 	}
 	private void update(){
 		//do pid calculation and apply power to each module
@@ -94,76 +127,35 @@ public class DriveTrain{
         double D = yInput + rotateInput * (Constants.WHEELBASE_WIDTH / R);
         //find wheel speeds
         double frontRightWheelSpeed = Math.sqrt((B * B) + (C * C));
-        double frontLeftWheelSpeed = Math.sqrt((B * B) + (D * D));
-        double rearLeftWheelSpeed = Math.sqrt((A * A) + (D * D));
-        double rearRightWheelSpeed = Math.sqrt((A * A) + (C * C));
+        double frontLeftWheelSpeed  = Math.sqrt((B * B) + (D * D));
+        double rearLeftWheelSpeed   = Math.sqrt((A * A) + (D * D));
+        double rearRightWheelSpeed  = Math.sqrt((A * A) + (C * C));
         //normalize wheel speeds
         double max = frontRightWheelSpeed;
-        if (frontLeftWheelSpeed > max) {
-            max = frontLeftWheelSpeed;
-        }
-        if (rearLeftWheelSpeed > max) {
-            max = rearLeftWheelSpeed;
-        }
-        if (rearRightWheelSpeed > max) {
-            max = rearRightWheelSpeed;
-        }
+        max = Util.normalize(max, frontLeftWheelSpeed);
+        max = Util.normalize(max, rearLeftWheelSpeed);
+        max = Util.normalize(max, rearRightWheelSpeed);
         if(max > 1.0){
         	frontRightWheelSpeed /= max;
             frontLeftWheelSpeed /= max;
             rearLeftWheelSpeed /= max;
             rearRightWheelSpeed /= max;
-        }
-        
+        }        
         //find steering angles
         double frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI;
         double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
         double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
         double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-        
-        if(shortestPath(frontLeft.getCurrentAngle(),frontLeftSteeringAngle)){
-        	frontLeft.pid.setSetpoint(frontLeftSteeringAngle);
-    		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
-        }else{
-        	frontLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle + 180.0));
-    		frontLeft.setDriveSpeed(-frontLeftWheelSpeed);
-        }
-        if(shortestPath(frontRight.getCurrentAngle(),frontRightSteeringAngle)){
-        	frontRight.pid.setSetpoint(frontRightSteeringAngle);
-    		frontRight.setDriveSpeed(frontRightWheelSpeed);
-        }else{
-        	frontRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(frontRightSteeringAngle + 180.0));
-    		frontRight.setDriveSpeed(-frontRightWheelSpeed);
-        }
-        if(shortestPath(rearLeft.getCurrentAngle(),rearLeftSteeringAngle)){
-        	rearLeft.pid.setSetpoint(rearLeftSteeringAngle);
-    		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
-        }else{
-        	rearLeft.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearLeftSteeringAngle + 180.0));
-    		rearLeft.setDriveSpeed(-rearLeftWheelSpeed);
-        }
-        if(shortestPath(rearRight.getCurrentAngle(),rearRightSteeringAngle)){
-        	rearRight.pid.setSetpoint(rearRightSteeringAngle);
-    		rearRight.setDriveSpeed(rearRightWheelSpeed);
-        }else{
-        	rearRight.pid.setSetpoint(Util.boundAngleNeg180to180Degrees(rearRightSteeringAngle + 180.0));
-        	rearRight.setDriveSpeed(-rearRightWheelSpeed);
-        }
+        //set angles and power
+        frontLeft.setGoal(frontLeftSteeringAngle);
+		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
+		frontRight.setGoal(frontRightSteeringAngle);
+		frontRight.setDriveSpeed(frontRightWheelSpeed);
+		rearLeft.setGoal(rearLeftSteeringAngle);
+		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
+		rearRight.setGoal(rearRightSteeringAngle);
+		rearRight.setDriveSpeed(rearRightWheelSpeed);
 	}
 	
-	public boolean shortestPath(double current, double goal){
-		double C1 = current + 180.0;
-		double G1, G2;
-		G1 = goal + 180;
-		if(goal >= 0){
-			G2 = goal;
-		}else{
-			G2 = G1 + 180;
-		}
-		if(Math.abs(C1 - G1) < Math.abs(C1 - G2)){
-			return true;
-		}else{
-			return false;
-		}
-	}
+	
 }

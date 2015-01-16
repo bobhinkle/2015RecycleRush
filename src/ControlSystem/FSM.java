@@ -61,7 +61,8 @@ public class FSM {
     		while(keepRunning){
 				update();
 				robot.elevator.run();
-				Timer.delay(0.02); 
+				robot.dt.run();
+				Timer.delay(0.01); 
     		}
         }
         public void kill(){
