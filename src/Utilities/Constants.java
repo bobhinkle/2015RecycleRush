@@ -13,6 +13,7 @@ public class Constants {
     public static final double STEERING_P = 0.015; //0.0
     public static final double STEERING_I = 0.0;  //
     public static final double STEERING_D = 0.0;  //0.0
+    public static final double INPUT_DELAY = 0.25;
     
     public static final double DIST_KP = 0.04;
     public static final double DIST_KI = 0.0002; 
@@ -53,8 +54,8 @@ public class Constants {
     public static final int GYRO_INIT = 0;
     public static final int GYRO_READY  = 1;
     
-    public static final double WHEELBASE_LENGTH = 25.0;
-    public static final double WHEELBASE_WIDTH  = 20.0;
+    public static final double WHEELBASE_LENGTH = 33.1625;
+    public static final double WHEELBASE_WIDTH  = 21.5;
     
     public static final double POWER_STALL = 10.0;
 }

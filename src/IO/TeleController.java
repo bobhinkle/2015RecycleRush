@@ -105,25 +105,27 @@ public class TeleController
     
     public void driver() {
 
-    	if(driver.getAButton()){
-        	fsm.setGoalState(FSM.PRE_TOTE);
+    	if(driver.getAButton()){        	
+    		robot.dt.sendInput(0.0,-1.0,0.0);
+        }else if(driver.getBButton()){       	
+        	robot.dt.sendInput(1.0,0.0,0.0);
+        }else if(driver.getXButton()){
+        	robot.dt.sendInput(-1.0,0.0,0.0);
+        }else if(driver.getYButton()){
+        	robot.dt.sendInput(0.0,1.0,0.0);
+        }else{
+        	robot.dt.sendInput(driver.getRightStickY(), -driver.getRightStickX(), -driver.getLeftStickX());
         }
         //////////////////////////////////////////
-        if(driver.getBButton()){
-        	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE
-        }
+        
         ////////////////////////////////////////
-        if(driver.getXButton()){
-        	
-        }
+        
         ///////////////////////////////////////
-        if(driver.getYButton()){
-           
-        }
+        
         /////////////////////////////////////////////
 
         if(driver.getRightTrigger()){ 
-            
+        	fsm.setGoalState(FSM.PRE_TOTE);
         }
         //////////////////////////////////
         if(driver.getRightBumper()) {
@@ -131,7 +133,7 @@ public class TeleController
         }
         ///////////////////////////////////////////////////////
         if(driver.getLeftTrigger()){
-        	
+        	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE
         }
         //////////////////////////////////////////////////////////////////// 
         if(driver.getLeftBumper()){ //reverse rollers
@@ -146,7 +148,7 @@ public class TeleController
         	
         }
 
-        robot.dt.sendInput(driver.getLeftStickX(), driver.getLeftStickY(), driver.getRightStickX());
+//        
     }
     public void update(){
     	coDriver();

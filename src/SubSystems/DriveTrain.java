@@ -15,8 +15,9 @@ public class DriveTrain{
 	private SwerveDriveModule rearLeft;
 	private SwerveDriveModule rearRight;
 	private static double R = Math.sqrt(Math.pow(Constants.WHEELBASE_LENGTH,2.0) + Math.pow(Constants.WHEELBASE_WIDTH,2.0))/2.0;
-	
+	private double DEAD_BAND = 0.2;
 	private double xInput,yInput,rotateInput;
+	private double inputTimeStamp = 0.0;
 	
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
@@ -31,10 +32,25 @@ public class DriveTrain{
         return instance;
     }
 	public void sendInput(double x, double y, double rotate){
-		xInput = x;
-		yInput = y;
-		rotateInput = rotate;
+		
+		if((DEAD_BAND < x) && (x < -DEAD_BAND) || (DEAD_BAND < y) && (y < -DEAD_BAND) || (DEAD_BAND < rotate) && (rotate < -DEAD_BAND)){
+			xInput = Util.deadBand(x, DEAD_BAND);
+			yInput = Util.deadBand(y, DEAD_BAND);
+			rotateInput = Util.deadBand(rotate, DEAD_BAND);
+			inputTimeStamp = System.currentTimeMillis();
+		}else{
+			if(System.currentTimeMillis() > inputTimeStamp + Constants.INPUT_DELAY){
+				xInput = Util.deadBand(x, DEAD_BAND);
+				yInput = Util.deadBand(y, DEAD_BAND);
+				rotateInput = Util.deadBand(rotate, DEAD_BAND);
+			}
+		}
+		
+		SmartDashboard.putNumber("X Input", xInput);
+		SmartDashboard.putNumber("Y Input", yInput);
+		SmartDashboard.putNumber("Rotate Input", rotateInput);
 		update();
+		
 	}
 	private class SwerveDriveModule extends SynchronousPID implements Controller{
 		private MA3 rotationMA3;
@@ -120,41 +136,52 @@ public class DriveTrain{
 		rearRight.run();
 	}
 	private void update(){
-		//do pid calculation and apply power to each module
-		double A = xInput - rotateInput * (Constants.WHEELBASE_LENGTH / R);
-        double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / R);
-        double C = yInput - rotateInput * (Constants.WHEELBASE_WIDTH / R);
-        double D = yInput + rotateInput * (Constants.WHEELBASE_WIDTH / R);
-        //find wheel speeds
-        double frontRightWheelSpeed = Math.sqrt((B * B) + (C * C));
-        double frontLeftWheelSpeed  = Math.sqrt((B * B) + (D * D));
-        double rearLeftWheelSpeed   = Math.sqrt((A * A) + (D * D));
-        double rearRightWheelSpeed  = Math.sqrt((A * A) + (C * C));
-        //normalize wheel speeds
-        double max = frontRightWheelSpeed;
-        max = Util.normalize(max, frontLeftWheelSpeed);
-        max = Util.normalize(max, rearLeftWheelSpeed);
-        max = Util.normalize(max, rearRightWheelSpeed);
-        if(max > 1.0){
-        	frontRightWheelSpeed /= max;
-            frontLeftWheelSpeed /= max;
-            rearLeftWheelSpeed /= max;
-            rearRightWheelSpeed /= max;
-        }        
-        //find steering angles
-        double frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI;
-        double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
-        double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
-        double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-        //set angles and power
-        frontLeft.setGoal(frontLeftSteeringAngle);
-		frontLeft.setDriveSpeed(frontLeftWheelSpeed);
-		frontRight.setGoal(frontRightSteeringAngle);
-		frontRight.setDriveSpeed(frontRightWheelSpeed);
-		rearLeft.setGoal(rearLeftSteeringAngle);
-		rearLeft.setDriveSpeed(rearLeftWheelSpeed);
-		rearRight.setGoal(rearRightSteeringAngle);
-		rearRight.setDriveSpeed(rearRightWheelSpeed);
+		if(xInput == 0 && yInput == 0 && rotateInput == 0){
+			frontLeft.setGoal(45.0);
+			frontLeft.setDriveSpeed(0);
+			frontRight.setGoal(45.0);
+			frontRight.setDriveSpeed(0.0);
+			rearLeft.setGoal(45.0);
+			rearLeft.setDriveSpeed(0.0);
+			rearRight.setGoal(45.0);
+			rearRight.setDriveSpeed(0.0);
+		}else{
+			//do pid calculation and apply power to each module
+			double A = xInput - rotateInput * (Constants.WHEELBASE_LENGTH / R);
+	        double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / R);
+	        double C = yInput - rotateInput * (Constants.WHEELBASE_WIDTH / R);
+	        double D = yInput + rotateInput * (Constants.WHEELBASE_WIDTH / R);
+	        //find wheel speeds
+	        double frontRightWheelSpeed = Math.sqrt((B * B) + (C * C));
+	        double frontLeftWheelSpeed  = Math.sqrt((B * B) + (D * D));
+	        double rearLeftWheelSpeed   = Math.sqrt((A * A) + (D * D));
+	        double rearRightWheelSpeed  = Math.sqrt((A * A) + (C * C));
+	        //normalize wheel speeds
+	        double max = frontRightWheelSpeed;
+	        max = Util.normalize(max, frontLeftWheelSpeed);
+	        max = Util.normalize(max, rearLeftWheelSpeed);
+	        max = Util.normalize(max, rearRightWheelSpeed);
+	        if(max > 1.0){
+	        	frontRightWheelSpeed /= max;
+	            frontLeftWheelSpeed /= max;
+	            rearLeftWheelSpeed /= max;
+	            rearRightWheelSpeed /= max;
+	        }        
+	        //find steering angles
+	        double frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI;
+	        double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
+	        double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
+	        double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
+	        //set angles and power
+	        frontLeft.setGoal(frontLeftSteeringAngle);
+			frontLeft.setDriveSpeed(frontLeftWheelSpeed);
+			frontRight.setGoal(frontRightSteeringAngle);
+			frontRight.setDriveSpeed(frontRightWheelSpeed);
+			rearLeft.setGoal(rearLeftSteeringAngle);
+			rearLeft.setDriveSpeed(rearLeftWheelSpeed);
+			rearRight.setGoal(rearRightSteeringAngle);
+			rearRight.setDriveSpeed(rearRightWheelSpeed);
+		}
 	}
 	
 	
