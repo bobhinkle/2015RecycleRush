@@ -29,128 +29,116 @@ public class TeleController
         return instance;
     }    
     public void coDriver(){
-        if(codriver.getAButton()){
+        if(codriver.aButton.isPressed()){
         	
         }
         //////////////////////////////////////////
-        if(codriver.getBButton()){
+        if(codriver.bButton.isPressed()){
         	
         }
         ////////////////////////////////////////
-        if(codriver.getXButton()){
+        if(codriver.xButton.isPressed()){
         	
         }
         ///////////////////////////////////////
-        if(codriver.getYButton()){
+        if(codriver.yButton.isPressed()){
            
         }
         /////////////////////////////////////////////
 
-        if(codriver.getRightTrigger()){ 
+        if(codriver.rightTrigger.isPressed()){ 
             
         }
         //////////////////////////////////
-        if(codriver.getRightBumper()) {
+        if(codriver.rightBumper.isPressed()) {
            
         }
         ///////////////////////////////////////////////////////
-        if(codriver.getLeftTrigger()){
+        if(codriver.leftTrigger.isPressed()){
         	
         }
         //////////////////////////////////////////////////////////////////// 
-        if(codriver.getLeftBumper()){ //reverse rollers
+        if(codriver.leftBumper.isPressed()){ 
             
         }
         //////////////////////////////////////////////////////
-        if(codriver.getBackButton()){  // stop all 
+        if(codriver.backButton.isPressed()){  // stop all 
           
         }
         ////////////////////////////////////////////////////////
-        if(codriver.getStartButton()){
+        if(codriver.startButton.isPressed()){
         	
         }
-
-        
-        if (codriver.getRightStickY() > 0.4) {
-            
-        } else if (codriver.getRightStickY() < -0.4) {
-            
-        } else {
-             
-        }
-        ///////////////////////////////////////////////
-        if (codriver.getLeftStickY() > 0.4) {
-            
-        } else if (codriver.getLeftStickY() < -0.4) {
-            
-        } else {
+        ////////////////////////////////////////////////////////        
+        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < 0) {
             
         }
         ///////////////////////////////////////////////
-        if(codriver.getLeftStick()){
+        if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.LEFT_STICK_Y) < 0) {
+            
+        } 
+        ///////////////////////////////////////////////
+        if(codriver.leftCenterClick.isPressed()){
             
         }     
         ///////////////////////////////////////////////
-        if(codriver.getRightStick()) {
+        if(codriver.rightCenterClick.isPressed()) {
             
         }
-        if(codriver.getDPADX() > 0){
+        if(codriver.getButtonAxis(Xbox.DPADX) > 0 || codriver.getButtonAxis(Xbox.DPADX) < 0){
           
-        }else if(codriver.getDPADX() < 0){
-          
-        }else{
-            
         }
     }
     
     public void driver() {
 
-    	if(driver.getAButton()){        	
+    	if(driver.aButton.isPressed()){        	
     		robot.dt.sendInput(0.0,-1.0,0.0);
-        }else if(driver.getBButton()){       	
+        }else if(driver.bButton.isPressed()){       	
         	robot.dt.sendInput(1.0,0.0,0.0);
-        }else if(driver.getXButton()){
+        }else if(driver.xButton.isPressed()){
         	robot.dt.sendInput(-1.0,0.0,0.0);
-        }else if(driver.getYButton()){
+        }else if(driver.yButton.isPressed()){
         	robot.dt.sendInput(0.0,1.0,0.0);
         }else{
-        	robot.dt.sendInput(driver.getRightStickY(), -driver.getRightStickX(), -driver.getLeftStickX());
-        }
-        //////////////////////////////////////////
-        
-        ////////////////////////////////////////
-        
-        ///////////////////////////////////////
-        
+        	robot.dt.sendInput(driver.getButtonAxis(Xbox.RIGHT_STICK_Y), -driver.getButtonAxis(Xbox.RIGHT_STICK_X), -driver.getButtonAxis(Xbox.LEFT_STICK_X));
+        }        
         /////////////////////////////////////////////
-
-        if(driver.getRightTrigger()){ 
+        if(driver.leftTrigger.isPressed()){ 
         	fsm.setGoalState(FSM.PRE_TOTE);
         }
         //////////////////////////////////
-        if(driver.getRightBumper()) {
-           
-        }
-        ///////////////////////////////////////////////////////
-        if(driver.getLeftTrigger()){
+        if(driver.rightTrigger.isPressed()) {
         	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE
         }
+        ///////////////////////////////////////////////////////
+        if(driver.rightBumper.isPressed()){
+        	robot.intakeRollersForward();
+        }
         //////////////////////////////////////////////////////////////////// 
-        if(driver.getLeftBumper()){ //reverse rollers
-            
+        if(driver.leftBumper.isPressed()){ //reverse rollers
+            robot.intakeRollersReverse();
         }
         //////////////////////////////////////////////////////
-        if(driver.getBackButton()){  // stop all 
-          
+        if(driver.backButton.isPressed()){  // stop all 
+        	robot.intakeRollersStop();
         }
         ////////////////////////////////////////////////////////
-        if(driver.getStartButton()){
-        	
+        if(driver.startButton.isPressed()){
+        	fsm.setGoalState(FSM.PRE_TOTE);
+        }
+        if(driver.leftCenterClick.isPressed()){
+        	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE
+        }
+        if(driver.rightCenterClick.isPressed()){
+        	robot.actuateArm();
         }
 
 //        
     }
     public void update(){
+    	codriver.run();
+    	driver.run();
     	coDriver();
     	driver();
     }

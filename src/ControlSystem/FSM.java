@@ -62,7 +62,7 @@ public class FSM {
 				update();
 				robot.elevator.run();
 				robot.dt.run();
-				Timer.delay(0.01); 
+				Timer.delay(0.02); 
     		}
         }
         public void kill(){
@@ -104,7 +104,7 @@ public class FSM {
                 	}
                 	break;
                 case DEFAULT:
-                	
+                	SmartDashboard.putString("FSM_STATE", "WAITING");
                 	break;
             }
         }

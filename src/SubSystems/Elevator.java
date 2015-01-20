@@ -137,8 +137,7 @@ public class Elevator extends SynchronousPID implements Controller
                 if(this.getSetpoint() == 0){
                     power = 0;
                 }
-                if(this.goalPosition < 0){ //Elevator is at the bottom but goal is below current position. Reset to 0
-                    eleEnc.reset();
+                if(this.goalPosition < 0 && checkLimit()){ //Elevator is at the bottom but goal is below current position. Reset to 0
                     this.setGoal(0);
                 }
         }

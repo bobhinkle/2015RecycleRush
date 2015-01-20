@@ -31,7 +31,7 @@ public class Constants {
     
     public static final double DISTANCE_TOLERANCE = 0.2; //auton distance pid
     ////////////////////////////////////////////////////////////////////////////////////////////
-    public static final double ELEVATOR_MAX_HEIGHT  = 57.0;   // MAXIMUM ELEVATOR HEIGHT 10
+    public static final double ELEVATOR_MAX_HEIGHT  = 57.0;   // MAXIMUM ELEVATOR HEIGHT 57
     public static final double ELEVATOR_MIN_HEIGHT  = -10;
     public static final double ELEVATOR_DISTANCE_PER_PULSE = (56/20780.0)*4.0;
     public static final double ELEVATOR_CORRECTION = -0.5;
@@ -45,7 +45,7 @@ public class Constants {
     public static final double ELEVATOR_MAX_POWER = 1.0; 
     public static final double ELEVATOR_TOLERANCE = 0.1;
     public static final double ELEVATOR_INDEX_STATIONARY = 16.8 + ELEVATOR_CORRECTION;
-    public static final double ELEVATOR_INDEX_PRE_TOTE = 8.0  + ELEVATOR_CORRECTION;
+    public static final double ELEVATOR_INDEX_PRE_TOTE = 11.9  + ELEVATOR_CORRECTION;
     public static final double ELEVATOR_INDEX_LOADED = ELEVATOR_MIN_HEIGHT  + ELEVATOR_CORRECTION;
     /////////////////////////////////////////////////////////////////////////////////////////////////
     public static final double DRIVE_DISTANCE_PER_PULSE = 0.0173135189727312*2;      //0.03420833;
