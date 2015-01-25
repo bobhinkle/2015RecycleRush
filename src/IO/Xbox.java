@@ -2,10 +2,11 @@ package IO;
 
 import Utilities.Util;
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Xbox extends Joystick
 {
-    private static final double PRESS_THRESHHOLD = 0.15;
+    private static final double PRESS_THRESHHOLD = 0.4;
     public static final double DEAD_BAND = 0.15;
     
     public buttonCheck aButton;
@@ -42,6 +43,8 @@ public class Xbox extends Joystick
     
     public Xbox(int usb)   { 
     	super(usb);
+   }
+    public void init(){
     	aButton = new buttonCheck(A_BUTTON);
         bButton = new buttonCheck(B_BUTTON);
         xButton = new buttonCheck(X_BUTTON);
@@ -52,9 +55,9 @@ public class Xbox extends Joystick
         rightTrigger = new buttonCheck(RIGHT_TRIGGER);
         leftBumper = new buttonCheck(LEFT_BUMPER);
         rightBumper = new buttonCheck(RIGHT_BUMPER);
-        
-   }
-
+        leftCenterClick = new buttonCheck(LEFT_CENTER_CLICK);
+        rightCenterClick = new buttonCheck(RIGHT_CENTER_CLICK);
+    }
     private boolean getAButton()      { return getRawButton(1); }
     private boolean getBButton()      { return getRawButton(2); }
     private boolean getXButton()      { return getRawButton(3); }
@@ -63,22 +66,17 @@ public class Xbox extends Joystick
     private boolean getRightBumper()  { return getRawButton(6); }
     private boolean getBackButton()   { return getRawButton(7); }
     private boolean getStartButton()  { return getRawButton(8); }
-    private double  getLeftStickX()   { return getRawAxis(1); }
-    private double  getLeftStickY()   { return getRawAxis(2); }
+    private double  getLeftStickX()   { return getRawAxis(0); }
+    private double  getLeftStickY()   { return getRawAxis(1); }
     private double  getRightStickX()  { return getRawAxis(4); }
     private double  getRightStickY()  { return getRawAxis(5); }
     private double  getDPADX()        { return getRawAxis(6); }
     private double  getDPADY()        { return getRawAxis(7); }
     private boolean getLeftStick()    { return getRawButton(9); }
     private boolean getRightStick()   { return getRawButton(10); }
-    private boolean getRightTrigger() 
-    { 
-        return getRawAxis(3) < -PRESS_THRESHHOLD;
-    }
-    private boolean getLeftTrigger()  
-    { 
-        return getRawAxis(3) > PRESS_THRESHHOLD;
-    }
+    private boolean getRightTrigger() { return getRawAxis(3) > PRESS_THRESHHOLD;}
+    private boolean getLeftTrigger()  { return getRawAxis(2) > PRESS_THRESHHOLD; }
+    
     public double getButtonAxis(int button){
     	switch(button){
     	case LEFT_STICK_X:
@@ -100,21 +98,22 @@ public class Xbox extends Joystick
     
     
     public class buttonCheck{
-    	private boolean buttonPressed;
-    	private boolean buttonHeld;
-    	private double buttonStartTime;
-    	private boolean buttonCheck;
-    	private int buttonNumber;
+    	private int buttonState = 0;
+    	private double buttonStartTime = 0;
+    	private boolean buttonCheck = false;;
+    	private int buttonNumber = 0;
+    	private static final int NOT_PRESSED = 0;
+    	private static final int FIRST_PRESS = 1;
+    	private static final int HELD        = 2;
     	public buttonCheck(int number){
-    		buttonPressed = false;
-    		buttonHeld = false;
     		buttonNumber = number;
+    		buttonState = NOT_PRESSED;
     	}
     	public boolean isPressed(){
-    		return buttonPressed && !buttonHeld;
+    		return buttonState == FIRST_PRESS;
     	}
     	public double buttonHoldTime(){
-    		if(buttonHeld)
+    		if(buttonState == HELD)
     			return buttonStartTime - System.currentTimeMillis();
     		return 0;
     	}
@@ -157,14 +156,18 @@ public class Xbox extends Joystick
     			buttonCheck = getRightStick();
     			break;
     		}
-    		if(buttonCheck && !buttonHeld && !buttonPressed){
-    			buttonStartTime = System.currentTimeMillis();
-    			buttonPressed = true;
-    		}else if(buttonCheck && !buttonHeld && buttonPressed){
-    			buttonHeld = true;
-    		}else if(!buttonCheck){
-    			buttonPressed = false;
-    			buttonHeld = false;
+    		if(buttonCheck){
+    			switch(buttonState){
+    			case NOT_PRESSED:
+    				buttonState = FIRST_PRESS;
+    				buttonStartTime = System.currentTimeMillis();
+    				break;
+    			case FIRST_PRESS:
+    				buttonState = HELD;
+    				break;
+    			}
+    		}else{
+    			buttonState = NOT_PRESSED;
     		}
     	}
     }

@@ -27,12 +27,14 @@ public class Ports {
     public static final int ELEVATOR_BOTTOM_LIMIT = 0;
     public static final int ELEVATOR_TOP_LIMIT = 1;
     public static final int ELEVATOR_ENC = 2; //1 AND 2
+    public static final int TOTE_BUMPER = 9;
     //ANALOG INPUTS
     
     public static final int FRONT_RIGHT_MA3 = 0;
     public static final int FRONT_LEFT_MA3  = 1;
     public static final int REAR_RIGHT_MA3  = 2;
-    public static final int REAR_LEFT_MA3   = 3;
+    public static final int REAR_LEFT_MA3   = 4;
+    public static final int REAR_LINE_BREAK = 3;
     
     //SOLENOIDS
     public static final int STATIONARY_WANG = 0;

@@ -1,4 +1,6 @@
-package IO;import ControlSystem.FSM;
+package IO;import edu.wpi.first.wpilibj.Joystick.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import ControlSystem.FSM;
 import ControlSystem.RoboSystem;
 
 /** Handles the input from an xbox controller in order to calculate what the
@@ -17,7 +19,9 @@ public class TeleController
     private static TeleController instance = null;
     public TeleController(){
         driver = new Xbox(0);
+        driver.init();
         codriver  = new Xbox(1);
+        codriver.init();
         robot = RoboSystem.getInstance();
         fsm = FSM.getInstance();
         System.out.println("CONTROLS STARTED");
@@ -122,10 +126,12 @@ public class TeleController
         //////////////////////////////////////////////////////
         if(driver.backButton.isPressed()){  // stop all 
         	robot.intakeRollersStop();
+        	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }
         ////////////////////////////////////////////////////////
         if(driver.startButton.isPressed()){
-        	fsm.setGoalState(FSM.PRE_TOTE);
+        	fsm.setGoalState(FSM.INTAKING_TOTE);
+        	
         }
         if(driver.leftCenterClick.isPressed()){
         	fsm.setGoalState(FSM.LOAD_TOTE); //LOAD TOTE SEQUENCE

@@ -53,7 +53,14 @@ public class RoboSystem{
     	intake1.actuateArm();
     	intake2.actuateArm();
     }
-    
+    public void openArm(){
+    	intake1.extendArm();
+    	intake2.extendArm();
+    }
+    public void closeArm(){
+    	intake1.retractArm();
+    	intake2.retractArm();
+    }
     private class Intake{
     	private Solenoid arm;
     	private Victor roller;

@@ -1,5 +1,6 @@
 package SubSystems;
 
+import Sensors.IRProximity;
 import Sensors.SuperEncoder;
 import Utilities.Constants;
 import Utilities.Ports;
@@ -12,14 +13,15 @@ public class Elevator extends SynchronousPID implements Controller
 {
     private Victor drive;
     private SuperEncoder eleEnc;
-    private DigitalInput limitSwitch;
-    
+    private DigitalInput lowerLimitSwitch;
+    private DigitalInput upperLimitSwitch;
+    private IRProximity lineBreak;
+    private DigitalInput toteBumperSwitch;
     private double goalPosition;
     private boolean isOnTarget = false;
     private int onTargetThresh = 50;
     private int onTargetCounter = onTargetThresh;
     public static double kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
-
     private static Elevator instance = null;
     public static Elevator getInstance()
     {
@@ -36,7 +38,10 @@ public class Elevator extends SynchronousPID implements Controller
         eleEnc.setPIDReturn(SuperEncoder.PID_DISTANCE);
         eleEnc.setDistancePerPulse(Constants.ELEVATOR_DISTANCE_PER_PULSE);
         eleEnc.start();
-        limitSwitch = new DigitalInput(Ports.ELEVATOR_BOTTOM_LIMIT);
+        lineBreak = new IRProximity(Ports.REAR_LINE_BREAK);
+        toteBumperSwitch = new DigitalInput(Ports.TOTE_BUMPER);
+        lowerLimitSwitch = new DigitalInput(Ports.ELEVATOR_BOTTOM_LIMIT);
+        upperLimitSwitch = new DigitalInput(Ports.ELEVATOR_TOP_LIMIT);
         goalPosition = eleEnc.getDistance();
         this.setInputRange(Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT);
         this.setOutputRange(-Math.abs(Constants.ELEVATOR_MAX_POWER), Math.abs(Constants.ELEVATOR_MAX_POWER));
@@ -44,9 +49,15 @@ public class Elevator extends SynchronousPID implements Controller
 
     public synchronized void setGoal(double goalDistance)
     {
+    	double goal = goalDistance;
+    	if(goal > Constants.ELEVATOR_MAX_HEIGHT){
+    		goal = Constants.ELEVATOR_MAX_HEIGHT;
+    	}else if(goal < Constants.ELEVATOR_MIN_HEIGHT){
+    		goal = Constants.ELEVATOR_MIN_HEIGHT;
+    	}
         reset();
-        this.setSetpoint(goalDistance);
-        goalPosition = goalDistance;
+        this.setSetpoint(goal);
+        goalPosition = goal;
     }
     public void stop(){ this.setGoal(this.getHeight());}
     public double getHeight(){
@@ -58,14 +69,25 @@ public class Elevator extends SynchronousPID implements Controller
         isOnTarget = false;
         onTargetCounter = onTargetThresh;
     }
-    public boolean checkLimit(){
-        if(!limitSwitch.get()){
+    public boolean checkLowerLimit(){
+        if(!lowerLimitSwitch.get()){
                eleEnc.reset();
                isOnTarget = true;
                return true;
         }else{
             return false;
         }
+    }
+    public boolean checkUpperLimit(){
+        if(!upperLimitSwitch.get()){
+               isOnTarget = true;
+               return true;
+        }else{
+            return false;
+        }
+    }
+    public boolean toteOnBumper(){
+    	return !toteBumperSwitch.get();
     }
     public void lowerP(){
         double p = this.getP();
@@ -124,46 +146,47 @@ public class Elevator extends SynchronousPID implements Controller
     }
     public synchronized void run()
     {
-        checkLimit();
-        double current = eleEnc.getDistance();        
-        double calPower = this.calculate(current);
-        double power = Util.pidPower(-calPower, -Math.abs(Constants.ELEVATOR_MIN_POWER), -Math.abs(Constants.ELEVATOR_MAX_POWER),Math.abs(Constants.ELEVATOR_MIN_POWER), Math.abs(Constants.ELEVATOR_MAX_POWER));
+    	double goal = this.getSetpoint();
+    	double current = eleEnc.getDistance();        
+        double power = -this.calculate(current);
+        boolean lowerLimit = checkLowerLimit();
+        boolean upperLimit = checkUpperLimit();
         
         if(Util.onTarget(goalPosition,current,kOnTargetToleranceInches) || isOnTarget )
         {
-            if(onTarget())
+        	if(onTarget())
                 isOnTarget = true;
-                onTargetCounter--;
-                if(this.getSetpoint() == 0){
-                    power = 0;
-                }
-                if(this.goalPosition < 0 && checkLimit()){ //Elevator is at the bottom but goal is below current position. Reset to 0
-                    this.setGoal(0);
-                }
+        	else
+        		onTargetCounter--;
+        	
+            if(goal == 0 && lowerLimit){
+                power = 0;
+            }else{
+	            if(goal <= 0 && lowerLimit){ //Elevator is at the bottom but goal is below current position. Reset to 0
+	                this.setGoal(0);
+	            }else if(upperLimit){ //Elevator encoder is off and is trying to go beyond limit. Set goal to current height
+//	            	this.setGoal(current - 1.0);
+	            }else if(goal <= 0 && !lowerLimit){
+//	            	this.setGoal(current - 1.0);
+	            }
+            }
         }
         else
         {
-           if(!checkLimit()){
-               if(current >= Constants.ELEVATOR_MAX_HEIGHT){
-                   if(power < 0) // only allow down movement
-                     power = 0;
-                }
-           }else{
-               if(power > 0) //only move up
-                  power = 0;
-           }
-            onTargetCounter = onTargetThresh;
+        	onTargetCounter = onTargetThresh;
             isOnTarget = false;
         }
-        drive.set(power);
+        
+    	drive.set(power);
         SmartDashboard.putNumber("ELE_HEIGHT", current);
         SmartDashboard.putNumber("ELE_GOAL", goalPosition);
-        SmartDashboard.putNumber("ELE_TRUE_HEIGHT", current - Constants.ELEVATOR_CORRECTION);
         SmartDashboard.putNumber("ELE_POWER", power);
 //        SmartDashboard.putNumber("ELE_RAW", eleEnc.getRaw());
         SmartDashboard.putNumber("ELE_P", this.getP());
         SmartDashboard.putNumber("ELE_I", this.getI());
         SmartDashboard.putNumber("ELE_D", this.getD());
+        SmartDashboard.putNumber("LINE_BREAK", this.lineBreak.getDistance());
+        SmartDashboard.putBoolean("TOTE_BUMPER", toteOnBumper());
     }
 
     public synchronized boolean onTarget(){return onTargetCounter <= 0;}
@@ -188,5 +211,38 @@ public class Elevator extends SynchronousPID implements Controller
     }
     public void setOnTargetThreshHold(int threshHold){
     	onTargetThresh = threshHold;
+    }
+    
+    public synchronized void update(){
+    	double goal = this.getSetpoint();
+    	double current = eleEnc.getDistance();        
+        double power = this.calculate(current);
+        boolean lowerLimit = checkLowerLimit();
+        boolean upperLimit = checkUpperLimit();
+        
+        if(Util.onTarget(goalPosition,current,kOnTargetToleranceInches) || isOnTarget )
+        {
+        	if(onTarget())
+                isOnTarget = true;
+        	else
+        		onTargetCounter--;
+        	
+            if(goal == 0){
+                power = 0;
+            }else{
+	            if(goal < 0 && lowerLimit){ //Elevator is at the bottom but goal is below current position. Reset to 0
+	                this.setGoal(0);
+	            }else if(upperLimit){
+	            	this.setGoal(current);
+	            }
+            }
+        }
+        else
+        {
+        	onTargetCounter = onTargetThresh;
+            isOnTarget = false;
+        }
+        
+    	drive.set(-power);
     }
 }

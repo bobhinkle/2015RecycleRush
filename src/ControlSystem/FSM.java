@@ -18,6 +18,7 @@ public class FSM {
 	public final static int LOAD_TOTE = 2;
 	public final static int LOAD_TOTE_WAITING = 3;
 	public final static int LOAD_TOTE_STATIONARY_WAITING = 4;
+	public final static int INTAKING_TOTE = 5;
 	
 	public static FSM getInstance()
     {
@@ -27,7 +28,6 @@ public class FSM {
     }
         
     public FSM() {
-    	System.out.println("FSM STARTED");
     	SmartDashboard.putString("FSM", "STARTED");
         robot = RoboSystem.getInstance();
         pu = new partsUpdate();
@@ -100,7 +100,16 @@ public class FSM {
                 case LOAD_TOTE_STATIONARY_WAITING: //LOAD TOTE SEQUENCE STEP 3
                 	SmartDashboard.putString("FSM_STATE", "LOAD_TOTE_STAT"); //adriana says this makes sense. George says the opposite.
                 	if(robot.elevator.onTarget()){
+                		robot.intakeRollersStop();
                 		setGoalState(FSM.PRE_TOTE);
+                	}
+                	break;
+                case INTAKING_TOTE:
+                	if(robot.elevator.toteOnBumper()){
+                		setGoalState(FSM.LOAD_TOTE);
+                		robot.openArm();
+                	}else{
+                		robot.closeArm();
                 	}
                 	break;
                 case DEFAULT:
