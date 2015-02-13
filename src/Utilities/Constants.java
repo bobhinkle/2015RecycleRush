@@ -10,7 +10,7 @@ public class Constants {
     public static final double MIN_DT_POWER = 0.2;
     public static final int autonSelect = 2;
     
-    public static final double STEERING_P = 0.015; //0.0
+    public static final double STEERING_P = 0.003; //0.0
     public static final double STEERING_I = 0.0;  //
     public static final double STEERING_D = 0.0;  //0.0
     public static final double INPUT_DELAY = 0.25;
@@ -46,6 +46,7 @@ public class Constants {
     public static final double ELEVATOR_INDEX_STATIONARY = 16.8;
     public static final double ELEVATOR_INDEX_PRE_TOTE = 11.9;
     public static final double ELEVATOR_INDEX_LOADED = 0.0;
+    public static final double ELVEVATOR_RC_INDEXED  = 14.0;
     /////////////////////////////////////////////////////////////////////////////////////////////////
     public static final double DRIVE_DISTANCE_PER_PULSE = 0.0173135189727312*2;      //0.03420833;
     public static final double VOLTS_TO_PSI = 53.18;

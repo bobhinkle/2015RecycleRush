@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.PIDSource;
 public class MA3 implements PIDSource{
     private AnalogInput absEncoder;
     private double voltsToDegrees = 5.0/360.0;
-    private double offset = 347;
+    private double offset = 0;
     private double lastTime;
     private double lastAngle;
     

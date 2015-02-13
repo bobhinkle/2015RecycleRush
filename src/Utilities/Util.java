@@ -1,5 +1,7 @@
 package Utilities;
 
+import java.util.List;
+
 
 public class Util {
 
@@ -73,7 +75,9 @@ public class Util {
         if (val < min) return min;
         return val;
     } 
-    
+//    public static double limit(double v, double limit) {
+//        return (Math.abs(v) < limit) ? v : limit * (v < 0 ? -1 : 1);
+//      }
     /**
      * 
      * @param val
@@ -162,5 +166,35 @@ public class Util {
     	if(current > test)
     		return current;
     	return test;
+    }
+    
+    public static double degreesToRadians(double angle_in_degrees){
+    	return (angle_in_degrees * Math.PI)/180.0; 
+    }
+    public static double arcLength(double radius, double angleInDegrees){
+    	return (radius*angleInDegrees*Math.PI/180.0);
+    }
+    public static double trueAngletoDriveAngle(double angle){ //Angel in degrees clockwise
+    	return angle - 360.0;
+    }
+    public static double boundAngle0to90Degrees(double angle){
+    	angle = boundAngle0to360Degrees(angle);
+    	if(0 >= angle && angle <= 90.0)
+    		return angle;
+    	if(angle > 90 && angle <= 180)
+    		return angle - 90.0;
+    	if(angle > 180 && angle <= 270)
+    		return angle - 180.0;
+    	return angle - 270.0;
+    }
+    public static String joinStrings(String delim, List<?> strings) {
+  	  StringBuilder sb = new StringBuilder();
+  	  for (int i = 0; i < strings.size(); ++i) {
+  		  sb.append(strings.get(i).toString());
+  		  if (i < strings.size() - 1) {
+  			  sb.append(delim);
+  		  }
+  	  }
+  	  return sb.toString();
     }
 }

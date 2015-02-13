@@ -1,6 +1,7 @@
 package SubSystems;
 
 import Sensors.MA3;
+import Sensors.Navigation;
 import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
@@ -18,12 +19,15 @@ public class DriveTrain{
 	private double DEAD_BAND = 0.2;
 	private double xInput,yInput,rotateInput;
 	private double inputTimeStamp = 0.0;
-	
+	private double pointOfRotationX = 0.0;
+	private double pointOfRotationY = 0.0;
+	private Navigation nav;
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
+		nav = Navigation.getInstance();
 	}
 	public static DriveTrain getInstance()
     {
@@ -51,6 +55,24 @@ public class DriveTrain{
 		SmartDashboard.putNumber("Rotate Input", rotateInput);
 		update();
 		
+	}
+	public void setPointOfRotation(double radius){
+		double heading = nav.getHeadingInDegrees();
+		double x,y = 0;
+		if(0 <= heading && heading <= 180){
+			x = Math.sin(heading) * radius;
+			y = Math.cos(heading) * radius;
+		}else{
+			x = Math.cos(heading) * radius;
+			y = Math.sin(heading) * radius;
+		}
+		pointOfRotationX = nav.getX() - x;
+		pointOfRotationY = nav.getY() - y;
+	}
+	public void dosado(double power, double radius ){
+		double rads = Util.degreesToRadians(nav.getHeadingInDegrees());
+		double fwd = -rads * Math.cos(rads) * radius;
+		double str = rads * Math.sin(rads) * radius;
 	}
 	private class SwerveDriveModule extends SynchronousPID implements Controller{
 		private MA3 rotationMA3;

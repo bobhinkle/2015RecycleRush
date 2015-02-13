@@ -89,6 +89,9 @@ public class Elevator extends SynchronousPID implements Controller
     public boolean toteOnBumper(){
     	return !toteBumperSwitch.get();
     }
+    public boolean lineBreakTrigger(){
+    	return lineBreak.getDistance() > 2.2;
+    }
     public void lowerP(){
         double p = this.getP();
         double d = this.getD();
