@@ -11,7 +11,7 @@ import ControlSystem.RoboSystem;
  */ 
 public class TeleController
 {
-    public static final double STICK_DEAD_BAND = 0.1;
+    public static final double STICK_DEAD_BAND = 0.2;
 
     private Xbox codriver,driver;
     private FSM fsm;
@@ -105,7 +105,8 @@ public class TeleController
         }else if(driver.yButton.isPressed()){
         	robot.dt.sendInput(0.0,1.0,0.0);
         }else{
-        	robot.dt.sendInput(-driver.getButtonAxis(Xbox.RIGHT_STICK_Y), driver.getButtonAxis(Xbox.RIGHT_STICK_X), driver.getButtonAxis(Xbox.LEFT_STICK_X));
+        	robot.dt.sendInput(driver.getButtonAxis(Xbox.LEFT_STICK_X), -driver.getButtonAxis(Xbox.LEFT_STICK_Y), driver.getButtonAxis(Xbox.RIGHT_STICK_X));
+//        	robot.dt.sendInput(0.5, 0.5, 0.5);
         }        
     	
     	if(driver.aButton.isPressed()){
@@ -144,6 +145,7 @@ public class TeleController
         }
         //////////////////////////////////////////////////////
         if(driver.backButton.isPressed()){  // stop all 
+        	fsm.nav.resetRobotPosition(0, 0, 0, true);
         	robot.intakeRollersStop();
         	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }

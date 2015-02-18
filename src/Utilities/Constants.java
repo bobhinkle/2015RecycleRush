@@ -10,7 +10,7 @@ public class Constants {
     public static final double MIN_DT_POWER = 0.2;
     public static final int autonSelect = 2;
     
-    public static final double STEERING_P = 0.003; //0.0
+    public static final double STEERING_P = 0.015; //0.0
     public static final double STEERING_I = 0.0;  //
     public static final double STEERING_D = 0.0;  //0.0
     public static final double INPUT_DELAY = 0.25;

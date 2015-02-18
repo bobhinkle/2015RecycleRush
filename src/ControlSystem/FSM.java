@@ -1,6 +1,6 @@
 package ControlSystem;
 
-import Sensors.Navigation;
+import SubSystems.Navigation;
 import Utilities.Constants;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,7 +13,7 @@ public class FSM {
 	private int currentState = INIT;
     private int goalState = DEFAULT;
     private int prevState = DEFAULT;
-    private Navigation nav;
+    public Navigation nav;
 	public final static int DEFAULT = -1;
 	public final static int INIT = 0;
 	public final static int PRE_TOTE = 1;
@@ -72,7 +72,7 @@ public class FSM {
 				update();
 				robot.elevator.run();
 				robot.dt.run();
-				nav.updatePosition();
+				nav.run();
 				Timer.delay(0.02); 
     		}
         }

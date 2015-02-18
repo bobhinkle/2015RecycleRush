@@ -27,19 +27,19 @@ public class Ports {
     //DIGITAL INPUTS
     public static final int ELEVATOR_BOTTOM_LIMIT = 0;
     public static final int ELEVATOR_TOP_LIMIT = 1;
-    public static final int ELEVATOR_ENC = 2; //1 AND 2
-    public static final int NAV_X_ENC = 4;
-    public static final int NAV_Y_ENC = 6;
+    public static final int ELEVATOR_ENC = 2; //2 AND 3
+    public static final int NAV_X_ENC = 12;
+    public static final int NAV_Y_ENC = 14;
     public static final int TOTE_BUMPER = 9;
     //ANALOG INPUTS
     
-    public static final int FRONT_RIGHT_MA3 = 0;
-    public static final int FRONT_LEFT_MA3  = 1;
+    public static final int FRONT_RIGHT_MA3 = 4;
+    public static final int FRONT_LEFT_MA3  = 5;
     public static final int REAR_LEFT_MA3   = 2;
     public static final int REAR_RIGHT_MA3  = 3;
-    public static final int REAR_LINE_BREAK = 4;
-    public static final int GYRO		   = 5;
-    public static final int GYRO2		   = 6;
+    public static final int REAR_LINE_BREAK = 6;
+    public static final int GYRO		   = 0;
+    public static final int GYRO2		   = 1;
     
     //SOLENOIDS
     public static final int STATIONARY_WANG = 0;
