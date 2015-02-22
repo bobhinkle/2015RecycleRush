@@ -40,7 +40,9 @@ public class GyroThread {
     public double getAngle() {
         return mVolatileAngle;
     }
-
+    public double getAngleInDegrees(){
+    	return mVolatileAngle*(180.0/Math.PI);
+    }
     public void rezero() {
         mVolatileShouldReZero = true;
     }

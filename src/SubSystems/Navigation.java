@@ -70,24 +70,7 @@ public class Navigation implements PIDSource{
         }
         basicDistance = 0;
     }
-    public void checkForTopGoal(){
-        if(SmartDashboard.getBoolean("found", false)){
-            double angle = SmartDashboard.getNumber("azimuth", 0);
-            if((340 > angle && angle < 360) || (0 > angle && angle < 5)){
-                if(Util.getDifferenceInAngleDegrees(angle, SmartDashboard.getNumber("azimuth", 0)) < Util.getDifferenceInAngleDegrees(topGoalPosition, SmartDashboard.getNumber("azimuth", 0))){
-                    topGoalPosition = SmartDashboard.getNumber("azimuth", 0);
-                }
-            }else{
-                topGoalFound = false;
-            }
-        }
-    }
-    public boolean topGoalFound(){
-        return topGoalFound;
-    }
-    public double topGoalAngle(){
-        return Util.getDifferenceInAngleDegrees(topGoalPosition,getHeadingInDegrees());
-    }
+    
     public synchronized double getX()
     {
         return x;
@@ -100,7 +83,7 @@ public class Navigation implements PIDSource{
 
     public double getHeadingInDegrees()
     {
-        return Util.boundAngle0to360Degrees(gyro.getAngle());
+        return Util.boundAngle0to360Degrees(gyro.getAngleInDegrees());
     }
     public double getRawHeading(){
 //        return gyro.getAngle();
@@ -122,7 +105,6 @@ public class Navigation implements PIDSource{
     public synchronized void run()
     {
         updatePosition();
-        checkForTopGoal();
         SmartDashboard.putNumber("Distance",getDistance());
         SmartDashboard.putNumber("RawDistance",followerWheel.getRaw());
         SmartDashboard.putNumber("Heading",getHeadingInDegrees());
@@ -148,9 +130,9 @@ public class Navigation implements PIDSource{
             angle = (gyro.getAngle() + gyro2.getAngle())/1.0;
             SmartDashboard.putNumber("GYRO_HEADING2", gyro2.getAngle());
         }else{
-            angle = gyro.getAngle();
+            angle = gyro.getAngleInDegrees();
         }
-        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngle());
+        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngleInDegrees());
         /*
         double distanceTravelled = ((followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0) - distanceLast;
         double timePassed = System.currentTimeMillis() - timeLast;

@@ -196,5 +196,19 @@ public class Util {
   		  }
   	  }
   	  return sb.toString();
+    } 
+    
+    public static double xyToAngle(double x, double y){
+    	if(x == 0 && y == 1)
+    		return 0.0;
+    	if(x == 1 && y == 0)
+    		return 90.0;
+    	if(x == 0 && y == -1)
+    		return 180.0;
+    	if(x == -1 && y == 0)
+    		return 270.0;
+    	else{
+    		return Math.atan2(y, x)*180.0/Math.PI;
+    	}
     }
 }

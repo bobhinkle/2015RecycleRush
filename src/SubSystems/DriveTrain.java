@@ -38,22 +38,23 @@ public class DriveTrain{
         return instance;
     }
 	public void sendInput(double x, double y, double rotate){
+		double angle = nav.getRawHeading()/180.0*Math.PI;
+		xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
+		yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
 		
-//		x = Util.deadBand(x, DEAD_BAND);
-//		y = Util.deadBand(y, DEAD_BAND);
-//		rotate = Util.deadBand(rotate, DEAD_BAND);
-		
-//		double temp = (y * Math.cos(nav.getHeadingInDegrees())) + (x * Math.sin(nav.getHeadingInDegrees()));
-//		x = (-y * Math.sin(nav.getHeadingInDegrees())) + (x * Math.cos(nav.getHeadingInDegrees()));
-//		y = temp;
-		
-		xInput = x;
-		yInput = y;
-		rotateInput = rotate;
+		if(x==0 && y ==0){
+			rotateInput = rotate;
+		}else{
+			rotateInput = rotate * 1.0;
+		}
+//		System.out.println("X1" + x + " Y1" + y + " X2" + xInput + " Y2" + yInput + " H" + nav.getHeadingInDegrees() + " cos" + Math.cos(nav.getHeadingInDegrees()));
+		SmartDashboard.putNumber("X1", x);
+		SmartDashboard.putNumber("Y1", y);
 		SmartDashboard.putNumber("X Input", xInput);
 		SmartDashboard.putNumber("Y Input", yInput);
 		SmartDashboard.putNumber("Rotate Input", rotateInput);
-		reactToJoysticksWithSwerve(true);
+//		reactToJoysticksWithSwerve(true);
+		update();
 	}
 	public void setPointOfRotation(double radius){
 		double heading = nav.getHeadingInDegrees();
@@ -208,7 +209,7 @@ public class DriveTrain{
 	        double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
 	        double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
 	        //set angles and power
-	        if(rotateInput == 0){
+/*	        if(rotateInput == 0){
 	        	double newAngle = Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle - nav.getHeadingInDegrees());
 	        	frontLeft.setGoal(newAngle);
 				frontRight.setGoal(newAngle);
@@ -219,7 +220,11 @@ public class DriveTrain{
 				frontRight.setGoal(frontRightSteeringAngle);
 				rearLeft.setGoal(rearLeftSteeringAngle);
 				rearRight.setGoal(rearRightSteeringAngle);
-	        }
+	        }*/
+	        frontLeft.setGoal(frontLeftSteeringAngle);
+			frontRight.setGoal(frontRightSteeringAngle);
+			rearLeft.setGoal(rearLeftSteeringAngle);
+			rearRight.setGoal(rearRightSteeringAngle);
 			frontLeft.setDriveSpeed(-frontLeftWheelSpeed);
 			frontRight.setDriveSpeed(frontRightWheelSpeed);
 			rearLeft.setDriveSpeed(-rearLeftWheelSpeed);
@@ -330,9 +335,9 @@ public void reactToJoysticksWithSwerve(boolean withGyro) {
 		frontRight.setGoal(frTargetAngle);
 		rearLeft.setGoal(blTargetAngle);
 		rearRight.setGoal(brTargetAngle);
-		frontLeft.setDriveSpeed(flTotalVel);
+		frontLeft.setDriveSpeed(-flTotalVel);
 		frontRight.setDriveSpeed(frTotalVel);
-		rearLeft.setDriveSpeed(blTotalVel);
+		rearLeft.setDriveSpeed(-blTotalVel);
 		rearRight.setDriveSpeed(brTotalVel);
     }
 }

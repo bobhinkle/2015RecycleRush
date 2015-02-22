@@ -26,7 +26,7 @@ public class Robot extends SampleRobot {
     public void operatorControl() {
         while (isOperatorControl() && isEnabled()) {
         	controllers.update();            
-            Timer.delay(0.05);		// wait for a motor update time
+            Timer.delay(0.1);		// wait for a motor update time
         }
     }
 

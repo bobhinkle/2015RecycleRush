@@ -7,7 +7,7 @@ import SubSystems.Elevator;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 
 public class RoboSystem{
     
@@ -32,51 +32,51 @@ public class RoboSystem{
     	ahrs = Arduino.getInstance();
     	elevator = Elevator.getInstance();
     	intake1 = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER1);
-    	intake2 = new Intake(Ports.INTAKE_ARM2,Ports.INTAKE_ROLLER2);
+//    	intake2 = new Intake(Ports.INTAKE_ARM2,11);
     }
     
     public void intakeRollersForward(){
     	intake1.rollerForward();
-    	intake2.rollerForward();
+//    	intake2.rollerForward();
     }
     
     public void intakeRollersReverse(){
     	intake1.rollersReverse();
-    	intake2.rollersReverse();
+//    	intake2.rollersReverse();
     }
     
     public void intakeRollersStop(){
     	intake1.rollersStop();
-    	intake2.rollersStop();
+//    	intake2.rollersStop();
     }
     public void actuateArm(){
     	intake1.actuateArm();
-    	intake2.actuateArm();
+ //   	intake2.actuateArm();
     }
     public void openArm(){
     	intake1.extendArm();
-    	intake2.extendArm();
+ //   	intake2.extendArm();
     }
     public void closeArm(){
     	intake1.retractArm();
-    	intake2.retractArm();
+ //   	intake2.retractArm();
     }
     private class Intake{
     	private Solenoid arm;
-    	private Victor roller;
+    	private VictorSP roller;
     	private boolean intakeExtended = false;
     	
     	public Intake(int armPort, int rollerPort){
     		arm = new Solenoid(armPort);
-    		roller = new Victor(rollerPort);
+    		roller = new VictorSP(rollerPort);
     	}
     	
     	public void rollerForward(){
-        	roller.set(1);
+        	roller.set(-1);
         }
         
         public void rollersReverse(){
-        	roller.set(-1);
+        	roller.set(1);
         }
         
         public void rollersStop(){
@@ -84,12 +84,12 @@ public class RoboSystem{
         }
         
         public void extendArm(){
-        	arm.set(true);
+        	arm.set(false);
         	intakeExtended = true;
         }
         public void retractArm(){
         	intakeExtended = false;
-        	arm.set(false);
+        	arm.set(true);
         }
         public void actuateArm(){
         	if(intakeExtended){

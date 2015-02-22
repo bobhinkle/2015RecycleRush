@@ -34,44 +34,64 @@ public class TeleController
     }    
     public void coDriver(){
         if(codriver.aButton.isPressed()){
-        	
+        	SmartDashboard.putNumber("FSM2", fsm.previousState());
+    		switch(fsm.previousState()){
+    		case FSM.RC_WAITING_ON_LINE_BREAK:
+    			fsm.setGoalState(FSM.RC_INTAKING);
+    			break;
+    		case FSM.INTAKING_TOTE:
+    			fsm.setGoalState(FSM.LOAD_TOTE);
+    			break;
+    		case FSM.WAITING_FOR_TOTE:
+    			fsm.setGoalState(FSM.INTAKING_TOTE);
+    			break;
+    		case FSM.PRE_TOTE:
+    			fsm.setGoalState(FSM.WAITING_FOR_TOTE);
+    			break;
+    		default:
+    			fsm.setGoalState(FSM.PRE_TOTE);
+    			break;
+    		}
         }
         //////////////////////////////////////////
         if(codriver.bButton.isPressed()){
-        	
+        	fsm.setGoalState(FSM.PRE_TOTE);
         }
         ////////////////////////////////////////
         if(codriver.xButton.isPressed()){
-        	
+        	fsm.bypassState();
         }
         ///////////////////////////////////////
         if(codriver.yButton.isPressed()){
-           
+           robot.elevator.resetToteCounter();
         }
         /////////////////////////////////////////////
 
         if(codriver.rightTrigger.isPressed()){ 
-            
+        	fsm.setGoalState(FSM.LOWER_TO_DROP_TOTES);
         }
         //////////////////////////////////
         if(codriver.rightBumper.isPressed()) {
-           
+        	robot.intakeRollersForward();
         }
         ///////////////////////////////////////////////////////
         if(codriver.leftTrigger.isPressed()){
-        	
+        	robot.actuateArm();
         }
         //////////////////////////////////////////////////////////////////// 
         if(codriver.leftBumper.isPressed()){ 
-            
+        	robot.intakeRollersReverse();
         }
         //////////////////////////////////////////////////////
         if(codriver.backButton.isPressed()){  // stop all 
-          
+        	robot.elevator.resetManualToteCount();
+        	fsm.setGoalState(FSM.DEFAULT);
+        	robot.intakeRollersStop();
+        	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }
         ////////////////////////////////////////////////////////
         if(codriver.startButton.isPressed()){
-        	
+        	fsm.setGoalState(FSM.INTAKING_TOTE);
         }
         ////////////////////////////////////////////////////////        
         if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < 0) {
@@ -83,89 +103,80 @@ public class TeleController
         } 
         ///////////////////////////////////////////////
         if(codriver.leftCenterClick.isPressed()){
-            
+        	fsm.setGoalState(FSM.ZERO_ELEVATOR); //LOAD TOTE SEQUENCE
         }     
         ///////////////////////////////////////////////
         if(codriver.rightCenterClick.isPressed()) {
-            
+        	
         }
-        if(codriver.getButtonAxis(Xbox.DPADX) > 0 || codriver.getButtonAxis(Xbox.DPADX) < 0){
-          
+        if(codriver.getPOV() == 0){
+        	robot.elevator.increaseManualToteCount();
+        	fsm.setGoalState(FSM.MANUAL_TOTE);
+        }
+        if(codriver.getPOV() ==180){
+        	robot.elevator.decreaseManualToteCount();
+        	fsm.setGoalState(FSM.MANUAL_TOTE);
+        }
+        if((robot.elevator.lineBreakTrigger() || codriver.getPOV() == 90) && fsm.getCurrentState() == FSM.RC_LOAD_WAITING){
+        	fsm.setGoalState(FSM.RC_INTAKING);
         }
     }
     
     public void driver() {
     	
     	if(driver.aButton.isPressed()){        	
-    		robot.dt.sendInput(0.0,-1.0,0.0);
+    		robot.dt.sendInput(0.0,0.0,0.0);
         }else if(driver.bButton.isPressed()){       	
-        	robot.dt.sendInput(1.0,0.0,0.0);
+        	robot.dt.sendInput(0.0,0.0,1.0);
         }else if(driver.xButton.isPressed()){
-        	robot.dt.sendInput(-1.0,0.0,0.0);
+        	robot.dt.sendInput(0.0,0.0,-1.0);
         }else if(driver.yButton.isPressed()){
-        	robot.dt.sendInput(0.0,1.0,0.0);
+        	robot.dt.sendInput(0.0,0.0,0.0);
         }else{
-        	robot.dt.sendInput(driver.getButtonAxis(Xbox.LEFT_STICK_X), -driver.getButtonAxis(Xbox.LEFT_STICK_Y), driver.getButtonAxis(Xbox.RIGHT_STICK_X));
-//        	robot.dt.sendInput(0.5, 0.5, 0.5);
+        	robot.dt.sendInput(driver.getButtonAxis(Xbox.LEFT_STICK_X), driver.getButtonAxis(Xbox.LEFT_STICK_Y), driver.getButtonAxis(Xbox.RIGHT_STICK_X));
         }        
     	
     	if(driver.aButton.isPressed()){
-    		SmartDashboard.putNumber("FSM2", fsm.getCurrentState());
-    		switch(fsm.getCurrentState()){
-    		case FSM.RC_WAITING_ON_LINE_BREAK:
-    			fsm.setGoalState(FSM.RC_INTAKING);
-    			break;
-    		case FSM.INTAKING_TOTE:
-    			fsm.setGoalState(FSM.LOAD_TOTE);
-    			break;
-    		case FSM.WAITING_FOR_TOTE:
-    			fsm.setGoalState(FSM.INTAKING_TOTE);
-    			break;
-    		}
+    		
     	}
     	if(driver.bButton.isPressed()){
-    		fsm.setGoalState(FSM.RC_INTAKING);
+    		
     	}
         /////////////////////////////////////////////
     	
         if(driver.leftTrigger.isPressed()){ 
-        	fsm.setGoalState(FSM.PRE_TOTE);
+        	
         }
         //////////////////////////////////
         if(driver.rightTrigger.isPressed()) {
-        	fsm.setGoalState(FSM.WAITING_FOR_TOTE);
+
         }
         ///////////////////////////////////////////////////////
         if(driver.rightBumper.isPressed()){
-        	robot.intakeRollersForward();
+        	
         }
         //////////////////////////////////////////////////////////////////// 
         if(driver.leftBumper.isPressed()){ //reverse rollers
-            robot.intakeRollersReverse();
+            
         }
         //////////////////////////////////////////////////////
         if(driver.backButton.isPressed()){  // stop all 
         	fsm.nav.resetRobotPosition(0, 0, 0, true);
-        	robot.intakeRollersStop();
-        	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }
         ////////////////////////////////////////////////////////
         if(driver.startButton.isPressed()){
-        	fsm.setGoalState(FSM.INTAKING_TOTE);
+        	
         }
         if(driver.leftCenterClick.isPressed()){
-        	fsm.setGoalState(FSM.INTAKING_TOTE); //LOAD TOTE SEQUENCE
+        	
         }
         if(driver.rightCenterClick.isPressed()){
-        	robot.actuateArm();
+        	
         }
         if(driver.getPOV() == 0){
-        	fsm.setGoalState(FSM.RC_LOAD);
+        	
         }
-        if((robot.elevator.lineBreakTrigger() || driver.getPOV() == 90) && fsm.getCurrentState() == FSM.RC_LOAD_WAITING){
-        	fsm.setGoalState(FSM.RC_INTAKING);
-        }
-//        
+        
     }
     public void update(){
     	codriver.run();

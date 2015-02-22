@@ -6,12 +6,12 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Elevator extends SynchronousPID implements Controller
 {
-    private Victor drive;
+    private VictorSP drive,drive2;
     private SuperEncoder eleEnc;
     private DigitalInput lowerLimitSwitch;
     private DigitalInput upperLimitSwitch;
@@ -23,6 +23,8 @@ public class Elevator extends SynchronousPID implements Controller
     private int onTargetCounter = onTargetThresh;
     public static double kOnTargetToleranceInches = Constants.ELEVATOR_TOLERANCE;
     private static Elevator instance = null;
+    private int toteCounter = 0;
+    private int manualToteCount = 0;
     public static Elevator getInstance()
     {
         if( instance == null )
@@ -33,8 +35,9 @@ public class Elevator extends SynchronousPID implements Controller
     private Elevator()
     {
         loadProperties();
-        drive = new Victor(Ports.ELEVATOR);
-        eleEnc = new SuperEncoder(Ports.ELEVATOR_ENC,Ports.ELEVATOR_ENC+1,true,SuperEncoder.HIGH_RESOLUTION);//comp false
+        drive = new VictorSP(Ports.ELEVATOR);
+//        drive2 = new VictorSP(Ports.ELEVATOR2);
+        eleEnc = new SuperEncoder(Ports.ELEVATOR_ENC,Ports.ELEVATOR_ENC+1,false,SuperEncoder.HIGH_RESOLUTION);//comp false
         eleEnc.setPIDReturn(SuperEncoder.PID_DISTANCE);
         eleEnc.setDistancePerPulse(Constants.ELEVATOR_DISTANCE_PER_PULSE);
         eleEnc.start();
@@ -56,12 +59,29 @@ public class Elevator extends SynchronousPID implements Controller
     		goal = Constants.ELEVATOR_MIN_HEIGHT;
     	}
         reset();
+        if(goal < getHeight()){
+        	this.setPID(Constants.ELEVATOR_DOWN_P, Constants.ELEVATOR_DOWN_I, Constants.ELEVATOR_DOWN_D);
+        }else{
+        	this.setPID(Constants.ELEVATOR_P, Constants.ELEVATOR_I, Constants.ELEVATOR_D);
+        }
         this.setSetpoint(goal);
         goalPosition = goal;
     }
     public void stop(){ this.setGoal(this.getHeight());}
     public double getHeight(){
         return eleEnc.getDistance();
+    }
+    public int getManualToteCount(){
+    	return manualToteCount;
+    }
+    public void resetManualToteCount(){
+    	manualToteCount = 0;
+    }
+    public void increaseManualToteCount(){
+    	manualToteCount = (int)Util.limit(manualToteCount + 1, 0, 3);
+    }
+    public void decreaseManualToteCount(){
+    	manualToteCount = (int)Util.limit(manualToteCount - 1, 0, 3);
     }
     public synchronized void reset()
     {
@@ -147,6 +167,16 @@ public class Elevator extends SynchronousPID implements Controller
     public void upGain(){
         this.setPID(Constants.ELEVATOR_P, Constants.ELEVATOR_I, Constants.ELEVATOR_D);
     }
+    public void increaseToteCount(){
+    	toteCounter +=1;
+    	System.out.println("TOTEINCREASE" + toteCounter);
+    }
+    public void resetToteCounter(){
+    	toteCounter = 0;
+    }
+    public int getToteCount(){
+    	return toteCounter;
+    }
     public synchronized void run()
     {
     	double goal = this.getSetpoint();
@@ -180,7 +210,8 @@ public class Elevator extends SynchronousPID implements Controller
             isOnTarget = false;
         }
         
-    	drive.set(power);
+    	drive.set(-power);
+//    	drive2.set(power);
         SmartDashboard.putNumber("ELE_HEIGHT", current);
         SmartDashboard.putNumber("ELE_GOAL", goalPosition);
         SmartDashboard.putNumber("ELE_POWER", power);
@@ -190,6 +221,9 @@ public class Elevator extends SynchronousPID implements Controller
         SmartDashboard.putNumber("ELE_D", this.getD());
         SmartDashboard.putNumber("LINE_BREAK", this.lineBreak.getDistance());
         SmartDashboard.putBoolean("TOTE_BUMPER", toteOnBumper());
+        SmartDashboard.putBoolean("bottomHall", lowerLimitSwitch.get());
+        SmartDashboard.putNumber("TOTE_COUNT", getToteCount());
+        SmartDashboard.putNumber("MAN_TOTE", getManualToteCount());
     }
 
     public synchronized boolean onTarget(){return onTargetCounter <= 0;}
