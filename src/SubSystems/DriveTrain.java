@@ -1,11 +1,10 @@
 package SubSystems;
 
 import Sensors.MA3;
-import Utilities.Calculate;
 import Utilities.Constants;
 import Utilities.Ports;
+import Utilities.TrajectorySmoother;
 import Utilities.Util;
-import Utilities.Vector2;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -16,7 +15,7 @@ public class DriveTrain{
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
 	private SwerveDriveModule rearRight;
-//	private static double R = Math.sqrt(Constants.WHEELBASE_LENGTH * Constants.WHEELBASE_LENGTH) + Math.pow(Constants.WHEELBASE_WIDTH,2.0))/2.0;
+//	private static double R = Math.sqrt(Math.pow(Constants.WHEELBASE_LENGTH,2.0) + Math.pow(Constants.WHEELBASE_WIDTH,2.0))/2.0;
 	private static double R = 39.52216348;
 	private double DEAD_BAND = 0.0;
 	private double xInput,yInput,rotateInput;
@@ -24,12 +23,16 @@ public class DriveTrain{
 	private double pointOfRotationX = 0.0;
 	private double pointOfRotationY = 0.0;
 	private Navigation nav;
+	private HeadingController heading;
+	private boolean useHeadingController = false;
+	private boolean setHeading = true;
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_MA3,Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
 		nav = Navigation.getInstance();
+		heading = new HeadingController();
 	}
 	public static DriveTrain getInstance()
     {
@@ -41,11 +44,18 @@ public class DriveTrain{
 		double angle = nav.getRawHeading()/180.0*Math.PI;
 		xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 		yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
-		
-		if(x==0 && y ==0){
-			rotateInput = rotate;
+		if(rotate == 0){
+			if(!setHeading){
+				useHeadingController = true;
+				heading.run();
+			}else{
+				heading.reset();
+				setHeading = false;
+			}
 		}else{
-			rotateInput = rotate * 1.0;
+			useHeadingController = false;
+			setHeading = true;
+			rotateInput = rotate;
 		}
 //		System.out.println("X1" + x + " Y1" + y + " X2" + xInput + " Y2" + yInput + " H" + nav.getHeadingInDegrees() + " cos" + Math.cos(nav.getHeadingInDegrees()));
 		SmartDashboard.putNumber("X1", x);
@@ -53,7 +63,6 @@ public class DriveTrain{
 		SmartDashboard.putNumber("X Input", xInput);
 		SmartDashboard.putNumber("Y Input", yInput);
 		SmartDashboard.putNumber("Rotate Input", rotateInput);
-//		reactToJoysticksWithSwerve(true);
 		update();
 	}
 	public void setPointOfRotation(double radius){
@@ -178,15 +187,7 @@ public class DriveTrain{
 	        double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / R);
 	        double C = yInput - rotateInput * (Constants.WHEELBASE_WIDTH / R);
 	        double D = yInput + rotateInput * (Constants.WHEELBASE_WIDTH / R);
-//			double A = 0.080456925;
-//			double B = 0.919543075;
-//			double C = 0.22800072;
-//			double D = 0.77199928;
-	        SmartDashboard.putNumber("A", A);
-	        SmartDashboard.putNumber("B", B);
-	        SmartDashboard.putNumber("C", C);
-	        SmartDashboard.putNumber("D", D);
-	        SmartDashboard.putNumber("R", R);
+	        
 	        //find wheel speeds
 	        double frontRightWheelSpeed = Math.sqrt((B * B) + (C * C));
 	        double frontLeftWheelSpeed  = Math.sqrt((B * B) + (D * D));
@@ -208,19 +209,7 @@ public class DriveTrain{
 	        double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
 	        double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
 	        double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-	        //set angles and power
-/*	        if(rotateInput == 0){
-	        	double newAngle = Util.boundAngleNeg180to180Degrees(frontLeftSteeringAngle - nav.getHeadingInDegrees());
-	        	frontLeft.setGoal(newAngle);
-				frontRight.setGoal(newAngle);
-				rearLeft.setGoal(newAngle);
-				rearRight.setGoal(newAngle);
-	        }else{
-	        	frontLeft.setGoal(frontLeftSteeringAngle);
-				frontRight.setGoal(frontRightSteeringAngle);
-				rearLeft.setGoal(rearLeftSteeringAngle);
-				rearRight.setGoal(rearRightSteeringAngle);
-	        }*/
+	        
 	        frontLeft.setGoal(frontLeftSteeringAngle);
 			frontRight.setGoal(frontRightSteeringAngle);
 			rearLeft.setGoal(rearLeftSteeringAngle);
@@ -232,112 +221,55 @@ public class DriveTrain{
 		}
 	}
 	
-	
-	
-public void reactToJoysticksWithSwerve(boolean withGyro) {
-        
-        Vector2 translationVec;
-        Vector2 currVec;
-        double rotationVal;
-        double rotationRate;
-        double maxWheelVel;
-        boolean goingClockwise;
-        double angle;
-        Vector2 zeroVec = new Vector2(0.0, 0.0);
+	private class HeadingController extends FeedforwardPIV implements Controller
+	{
+	    private double goalPosition;
+	    public static final double kLoopRate = 200.0;
+	    private double lastHeading = 0;
+	    private TrajectorySmoother trajectory;
+	    public HeadingController()
+	    {
+	    	loadProperties();
+	    }
+	    public synchronized void setGoal(double goalAngle)
+	    {
+	        this.setSetpoint(goalAngle);
+	        goalPosition = goalAngle;
+	    }
+	    
+	    public synchronized void reset()
+	    {
+	        lastHeading = nav.getRawHeading();
+	        setGoal(lastHeading);
+	    }
 
-        //translation
-        currVec = new Vector2(xInput, yInput);
-        if(currVec.getMagnitude()>0.2){
-            translationVec = currVec;
-            //previousTransVec=currVec;
-        }
-        else
-            translationVec = zeroVec;
-        //translationVec = new Vector2(rightJ.getX(), rightJ.getY());
-        double speed = translationVec.getMagnitude();
-        speed = Calculate.saturate(speed, 1, -1);
-        //System.out.println("speed is "+speed);
-        if(withGyro)
-            angle = nav.getHeadingInDegrees()-translationVec.getWheelAngle();
-        else
-            angle = translationVec.getWheelAngle();
-        //System.out.println("angle is "+angle);
-        //System.out.println("(" + translationVec.getX() + "," + translationVec.getY() + ")");
-
-
-        //rotation
-        rotationVal = rotateInput;
-        if(Math.abs(rotationVal)>0.2){
-            rotationRate = rotationVal;
-        }
-        else{
-            rotationRate = 0.0;
-        }
-        if (rotationRate > 0) {
-            goingClockwise = true;
-        } else {
-            goingClockwise = false;
-        }
-
-        double vtx = speed * Math.cos(Math.toRadians(angle + 90));
-        double vty = speed * Math.sin(Math.toRadians(angle + 90));
-
-        //trans and rot combined
-        double flvx = vtx - rotationRate * (-Constants.WHEELBASE_LENGTH / 2);//LEFT FRONT=FRONT LEFT
-        double flvy = vty + rotationRate * (Constants.WHEELBASE_WIDTH / 2);
-        double flTotalVel = Calculate.hypot(flvx, flvy);
-        maxWheelVel = flTotalVel;
-        //System.out.println("init lfTotalVel is "+lfTotalVel);
-        //lfTotalVel = Calculate.saturate(lfTotalVel, 1, -1);
-        double flTargetAngle = (flvy != 0) ? Math.toDegrees(Math.atan2(flvy, flvx)) : 0;
-        
-
-        double blvx = vtx - rotationRate * (-Constants.WHEELBASE_LENGTH / 2);//LEFT REAR = BACK LEFT
-        double blvy = vty + rotationRate * (-Constants.WHEELBASE_WIDTH / 2);
-        double blTotalVel = Calculate.hypot(blvx, blvy);
-        if(blTotalVel>maxWheelVel)
-            maxWheelVel = blTotalVel;
-        //System.out.println("init lrTotalVel is "+lrTotalVel);
-        //lrTotalVel = Calculate.saturate(lrTotalVel, 1, -1);
-        double blTargetAngle = (blvy != 0) ? Math.toDegrees(Math.atan2(blvy, blvx)) : 0;
-        
-
-        double frvx = vtx - rotationRate * (Constants.WHEELBASE_LENGTH / 2);//RIGHT FRONT = FRONT RIGHT
-        double frvy = vty + rotationRate * (Constants.WHEELBASE_WIDTH / 2);
-        double frTotalVel = Calculate.hypot(frvx, frvy);
-        if(frTotalVel>maxWheelVel)
-            maxWheelVel = frTotalVel;
-        //System.out.println("init rfTotalVel is "+rfTotalVel);
-        //rfTotalVel = Calculate.saturate(rfTotalVel, 1, -1);
-        double frTargetAngle = (frvy != 0) ? Math.toDegrees(Math.atan2(frvy, frvx)) : 0;
-        
-
-        double brvx = vtx - rotationRate * (Constants.WHEELBASE_LENGTH / 2);//RIGHT REAR = BACK RIGHT
-        double brvy = vty + rotationRate * (-Constants.WHEELBASE_WIDTH / 2);
-        double brTotalVel = Calculate.hypot(brvx, brvy);
-        if(brTotalVel>maxWheelVel)
-            maxWheelVel = brTotalVel;
-        //System.out.println("init rrTotalVel is "+rrTotalVel);
-        //rrTotalVel = Calculate.saturate(rrTotalVel, 1, -1);
-        double brTargetAngle = (brvy != 0) ? Math.toDegrees(Math.atan2(brvy, brvx)) : 0;
-        
-        
-        //scaling wheel velocities
-        if(maxWheelVel >= 1)
-        {
-            flTotalVel = flTotalVel/maxWheelVel;
-            blTotalVel = blTotalVel/maxWheelVel;
-            frTotalVel = frTotalVel/maxWheelVel;
-            brTotalVel = brTotalVel/maxWheelVel;
-        }
-        
-        frontLeft.setGoal(flTargetAngle);
-		frontRight.setGoal(frTargetAngle);
-		rearLeft.setGoal(blTargetAngle);
-		rearRight.setGoal(brTargetAngle);
-		frontLeft.setDriveSpeed(-flTotalVel);
-		frontRight.setDriveSpeed(frTotalVel);
-		rearLeft.setDriveSpeed(-blTotalVel);
-		rearRight.setDriveSpeed(brTotalVel);
-    }
+	    public synchronized void run()
+	    {
+	        double current = nav.getRawHeading();
+	        double position = Util.getDifferenceInAngleDegrees(this.getSetpoint(), current);
+	        double velocity = Util.getDifferenceInAngleDegrees(current, lastHeading) * kLoopRate;
+	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
+	        double output = this.calculate(this.getSetpoint(), 90, 90, current, velocity, 1.0/kLoopRate);
+	        if(useHeadingController){
+	        	rotateInput = output;
+	        }
+	        lastHeading = current;
+	    }
+	    public final void loadProperties()
+	    {
+	        double kp = Constants.TURN_KP;
+	        double ki = Constants.TURN_KI;
+	        double kd = Constants.TURN_KD;
+	        double kfa = Constants.TURN_KFA;
+	        double kfv = Constants.TURN_KFV;
+	        setParams(kp, ki, kd, kfv, kfa);
+	        trajectory = new TrajectorySmoother(Constants.TURN_MAX_ACCEL,Constants.TURN_MAX_VEL);
+	        this.setOutputRange(-1.0, 1.0);
+	    }
+		@Override
+		public boolean onTarget() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	}
 }

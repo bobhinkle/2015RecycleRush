@@ -28,10 +28,6 @@ public class Calculate {
         return Math.sqrt(Math.pow(x, 2)+Math.pow(y, 2));
     }
     
-    public static Vector2 vectorAdd(Vector2 v1, Vector2 v2){//returns resultant vector when adding two given vectors 
-        Vector2 v3 = new Vector2(v1.getX()+v2.getX(), v1.getY()+v2.getY());
-        return v3;
-    } 
     
     public static double[] addAndShift(double[] arr,double a){//add most current value to an array and shift to the right
         for(int i=0; i<arr.length-1; i++)
