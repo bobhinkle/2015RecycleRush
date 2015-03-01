@@ -1,4 +1,5 @@
-package IO;import edu.wpi.first.wpilibj.Joystick.RumbleType;
+package IO;import Utilities.Util;
+import edu.wpi.first.wpilibj.Joystick.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import ControlSystem.FSM;
 import ControlSystem.RoboSystem;
@@ -34,28 +35,30 @@ public class TeleController
     }    
     public void coDriver(){
         if(codriver.aButton.isPressed()){
-        	SmartDashboard.putNumber("FSM2", fsm.previousState());
     		switch(fsm.previousState()){
-    		case FSM.RC_WAITING_ON_LINE_BREAK:
-    			fsm.setGoalState(FSM.RC_INTAKING);
+    		case RC_WAITING_ON_LINE_BREAK:
+    			fsm.setGoalState(FSM.State.RC_INTAKING);
     			break;
-    		case FSM.INTAKING_TOTE:
-    			fsm.setGoalState(FSM.LOAD_TOTE);
+    		case INTAKING_TOTE:
+    			fsm.setGoalState(FSM.State.LOAD_TOTE);
     			break;
-    		case FSM.WAITING_FOR_TOTE:
-    			fsm.setGoalState(FSM.INTAKING_TOTE);
+    		case WAITING_FOR_TOTE:
+    			fsm.setGoalState(FSM.State.INTAKING_TOTE);
     			break;
-    		case FSM.PRE_TOTE:
-    			fsm.setGoalState(FSM.WAITING_FOR_TOTE);
+    		case PRE_TOTE:
+    			fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);
+    			break;
+    		case TOTE_DROP_WAIT_FOR_COMPLETION:
+    			fsm.setGoalState(FSM.State.TOTE_DROP_RESET);
     			break;
     		default:
-    			fsm.setGoalState(FSM.PRE_TOTE);
+    			fsm.setGoalState(FSM.State.PRE_TOTE);
     			break;
     		}
         }
         //////////////////////////////////////////
         if(codriver.bButton.isPressed()){
-        	fsm.setGoalState(FSM.PRE_TOTE);
+        	fsm.setGoalState(FSM.State.PRE_TOTE);
         }
         ////////////////////////////////////////
         if(codriver.xButton.isPressed()){
@@ -68,7 +71,7 @@ public class TeleController
         /////////////////////////////////////////////
 
         if(codriver.rightTrigger.isPressed()){ 
-        	fsm.setGoalState(FSM.LOWER_TO_DROP_TOTES);
+        	
         }
         //////////////////////////////////
         if(codriver.rightBumper.isPressed()) {
@@ -85,13 +88,13 @@ public class TeleController
         //////////////////////////////////////////////////////
         if(codriver.backButton.isPressed()){  // stop all 
         	robot.elevator.resetManualToteCount();
-        	fsm.setGoalState(FSM.DEFAULT);
+        	fsm.fsmStopState();
         	robot.intakeRollersStop();
         	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }
         ////////////////////////////////////////////////////////
         if(codriver.startButton.isPressed()){
-        	fsm.setGoalState(FSM.INTAKING_TOTE);
+        	fsm.setGoalState(FSM.State.INTAKING_TOTE);
         }
         ////////////////////////////////////////////////////////        
         if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < 0) {
@@ -103,7 +106,7 @@ public class TeleController
         } 
         ///////////////////////////////////////////////
         if(codriver.leftCenterClick.isPressed()){
-        	fsm.setGoalState(FSM.ZERO_ELEVATOR); //LOAD TOTE SEQUENCE
+        	fsm.setGoalState(FSM.State.ZERO_ELEVATOR); //LOAD TOTE SEQUENCE
         }     
         ///////////////////////////////////////////////
         if(codriver.rightCenterClick.isPressed()) {
@@ -111,29 +114,29 @@ public class TeleController
         }
         if(codriver.getPOV() == 0){
         	robot.elevator.increaseManualToteCount();
-        	fsm.setGoalState(FSM.MANUAL_TOTE);
+        	fsm.setGoalState(FSM.State.MANUAL_TOTE);
         }
         if(codriver.getPOV() ==180){
         	robot.elevator.decreaseManualToteCount();
-        	fsm.setGoalState(FSM.MANUAL_TOTE);
+        	fsm.setGoalState(FSM.State.MANUAL_TOTE);
         }
-        if((robot.elevator.lineBreakTrigger() || codriver.getPOV() == 90) && fsm.getCurrentState() == FSM.RC_LOAD_WAITING){
-        	fsm.setGoalState(FSM.RC_INTAKING);
+        if((robot.elevator.lineBreakTrigger() || codriver.getPOV() == 90) && fsm.getCurrentState() == FSM.State.RC_LOAD_WAITING){
+        	fsm.setGoalState(FSM.State.RC_INTAKING);
         }
     }
     
     public void driver() {
     	
-    	if(driver.aButton.isPressed()){        	
-    		robot.dt.sendInput(0.0,0.0,0.0);
-        }else if(driver.bButton.isPressed()){       	
-        	robot.dt.sendInput(0.0,0.0,1.0);
+    	if(driver.aButton.isPressed()){       
+    		robot.dt.setHeading(180);
+        }else if(driver.bButton.isPressed()){  
+        	robot.dt.setHeading(90);
         }else if(driver.xButton.isPressed()){
-        	robot.dt.sendInput(0.0,0.0,-1.0);
+        	robot.dt.setHeading(270);
         }else if(driver.yButton.isPressed()){
-        	robot.dt.sendInput(0.0,0.0,0.0);
+        	robot.dt.setHeading(0);
         }else{
-        	robot.dt.sendInput(driver.getButtonAxis(Xbox.LEFT_STICK_X), driver.getButtonAxis(Xbox.LEFT_STICK_Y), driver.getButtonAxis(Xbox.RIGHT_STICK_X));
+        	robot.dt.sendInput(Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_X),0.15), Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_Y),0.15), Util.deadBand(driver.getButtonAxis(Xbox.RIGHT_STICK_X), 0.2),driver.leftTrigger.isHeld());
         }        
     	
     	if(driver.aButton.isPressed()){
@@ -149,7 +152,7 @@ public class TeleController
         }
         //////////////////////////////////
         if(driver.rightTrigger.isPressed()) {
-
+        	fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
         }
         ///////////////////////////////////////////////////////
         if(driver.rightBumper.isPressed()){

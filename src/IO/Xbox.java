@@ -117,6 +117,9 @@ public class Xbox extends Joystick
     			return buttonStartTime - System.currentTimeMillis();
     		return 0;
     	}
+    	public boolean isHeld(){
+    		return buttonState == HELD;
+    	}
     	public void update(){
     		switch(buttonNumber){
     		case A_BUTTON:

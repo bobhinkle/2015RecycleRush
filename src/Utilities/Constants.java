@@ -31,8 +31,8 @@ public class Constants {
     
     public static final double DISTANCE_TOLERANCE = 0.2; //auton distance pid
     
-    public static final double TURN_KP = 0.0175; //0.020
-    public static final double TURN_KI = 0.000005;
+    public static final double TURN_KP = 0.012; //0.020
+    public static final double TURN_KI = 0.000001;
     public static final double TURN_KD = 0.00;//0.02
     public static final double TURN_KFV = 0.00;
     public static final double TURN_KFA = 0.00;
@@ -56,7 +56,7 @@ public class Constants {
     public static final double ELEVATOR_INDEX_PRE_TOTE = 14.8;
     public static final double ELEVATOR_INDEX_LOADED = -10.0;
     public static final double ELVEVATOR_RC_INDEXED  = 14.0;
-    public static final double ELEVATOR_LAST_TOTE    = 8.0;
+    public static final double ELEVATOR_LAST_TOTE    = 5.0;
     public static final double EVEVATOR_ZERO		 = -54;
     public static final double TOTE_2	             = 21.0;
     public static final double TOTE_3				 = 27.0;

@@ -26,6 +26,7 @@ public class DriveTrain{
 	private HeadingController heading;
 	private boolean useHeadingController = false;
 	private boolean setHeading = true;
+	private boolean no45 = false;
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
@@ -40,14 +41,20 @@ public class DriveTrain{
             instance = new DriveTrain();
         return instance;
     }
-	public void sendInput(double x, double y, double rotate){
+	public void sendInput(double x, double y, double rotate,boolean halfPower){
 		double angle = nav.getRawHeading()/180.0*Math.PI;
+		if(halfPower){
+			y = y/2.0;
+			x = x/2.0;
+		}
 		xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 		yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
+		rotateInput = rotate;
+		no45 = halfPower;
 		if(rotate == 0){
 			if(!setHeading){
 				useHeadingController = true;
-				heading.run();
+//				heading.run();
 			}else{
 				heading.reset();
 				setHeading = false;
@@ -57,9 +64,6 @@ public class DriveTrain{
 			setHeading = true;
 			rotateInput = rotate;
 		}
-//		System.out.println("X1" + x + " Y1" + y + " X2" + xInput + " Y2" + yInput + " H" + nav.getHeadingInDegrees() + " cos" + Math.cos(nav.getHeadingInDegrees()));
-		SmartDashboard.putNumber("X1", x);
-		SmartDashboard.putNumber("Y1", y);
 		SmartDashboard.putNumber("X Input", xInput);
 		SmartDashboard.putNumber("Y Input", yInput);
 		SmartDashboard.putNumber("Rotate Input", rotateInput);
@@ -173,13 +177,15 @@ public class DriveTrain{
 	}
 	private void update(){
 		if(xInput == 0 && yInput == 0 && rotateInput == 0){
-			frontLeft.setGoal(135.0);
+			if(!no45){
+				frontLeft.setGoal(135.0);
+				frontRight.setGoal(45.0);
+				rearLeft.setGoal(45.0);
+				rearRight.setGoal(-45.0);
+			}
 			frontLeft.setDriveSpeed(0);
-			frontRight.setGoal(45.0);
 			frontRight.setDriveSpeed(0.0);
-			rearLeft.setGoal(45.0);
 			rearLeft.setDriveSpeed(0.0);
-			rearRight.setGoal(-45.0);
 			rearRight.setDriveSpeed(0.0);
 		}else{
 			//do pid calculation and apply power to each module
@@ -209,7 +215,6 @@ public class DriveTrain{
 	        double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
 	        double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
 	        double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-	        
 	        frontLeft.setGoal(frontLeftSteeringAngle);
 			frontRight.setGoal(frontRightSteeringAngle);
 			rearLeft.setGoal(rearLeftSteeringAngle);
@@ -220,7 +225,9 @@ public class DriveTrain{
 			rearRight.setDriveSpeed(rearRightWheelSpeed);
 		}
 	}
-	
+	public void setHeading(double angle){
+		heading.setGoal(angle);
+	}
 	private class HeadingController extends FeedforwardPIV implements Controller
 	{
 	    private double goalPosition;
@@ -251,7 +258,7 @@ public class DriveTrain{
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
 	        double output = this.calculate(this.getSetpoint(), 90, 90, current, velocity, 1.0/kLoopRate);
 	        if(useHeadingController){
-	        	rotateInput = output;
+	        	rotateInput = Util.deadBand(output, 0.1);
 	        }
 	        lastHeading = current;
 	    }

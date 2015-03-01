@@ -153,7 +153,9 @@ public class Util {
         }
         return angle;
     }
-    
+    public static double scaledInput(double input, double deadband){
+    	return 0;
+    }
     public static double scale(double x, double from_min, double from_max, double to_min, double to_max)
     {
         if(x < from_min)

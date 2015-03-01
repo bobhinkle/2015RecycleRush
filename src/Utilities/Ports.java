@@ -27,7 +27,7 @@ public class Ports {
     
     //DIGITAL INPUTS
     public static final int ELEVATOR_BOTTOM_LIMIT = 0;
-    public static final int ELEVATOR_TOP_LIMIT = 22;
+    public static final int ELEVATOR_TOP_LIMIT = 4;
     public static final int ELEVATOR_ENC = 10; 
     public static final int NAV_X_ENC = 14;
     public static final int NAV_Y_ENC = 16;
@@ -45,5 +45,6 @@ public class Ports {
     //SOLENOIDS
     public static final int STATIONARY_WANG = 0;
     public static final int INTAKE_ARM = 6;
-    public static final int INTAKE_ARM2 = 7;
+    public static final int TOP_REVERSE_CARRIAGE_ARMS = 7;
+    public static final int TOTEPUSH = 5;
 }

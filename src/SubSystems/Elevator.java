@@ -6,6 +6,7 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -25,6 +26,7 @@ public class Elevator extends SynchronousPID implements Controller
     private static Elevator instance = null;
     private int toteCounter = 0;
     private int manualToteCount = 0;
+    private Solenoid topArms;
     public static Elevator getInstance()
     {
         if( instance == null )
@@ -48,6 +50,7 @@ public class Elevator extends SynchronousPID implements Controller
         goalPosition = eleEnc.getDistance();
         this.setInputRange(Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT);
         this.setOutputRange(-Math.abs(Constants.ELEVATOR_MAX_POWER), Math.abs(Constants.ELEVATOR_MAX_POWER));
+        topArms = new Solenoid(Ports.TOP_REVERSE_CARRIAGE_ARMS);
     }
 
     public synchronized void setGoal(double goalDistance)
@@ -111,6 +114,12 @@ public class Elevator extends SynchronousPID implements Controller
     }
     public boolean lineBreakTrigger(){
     	return lineBreak.getDistance() > 2.2;
+    }
+    public void stackHold(){
+    	topArms.set(false);
+    }
+    public void stackRelease(){
+    	topArms.set(true);
     }
     public void lowerP(){
         double p = this.getP();
@@ -198,7 +207,7 @@ public class Elevator extends SynchronousPID implements Controller
 	            if(goal <= 0 && lowerLimit){ //Elevator is at the bottom but goal is below current position. Reset to 0
 	                this.setGoal(0);
 	            }else if(upperLimit){ //Elevator encoder is off and is trying to go beyond limit. Set goal to current height
-//	            	this.setGoal(current - 1.0);
+	            	this.setGoal(current);
 	            }else if(goal <= 0 && !lowerLimit){
 //	            	this.setGoal(current - 1.0);
 	            }
@@ -222,6 +231,7 @@ public class Elevator extends SynchronousPID implements Controller
         SmartDashboard.putNumber("LINE_BREAK", this.lineBreak.getDistance());
         SmartDashboard.putBoolean("TOTE_BUMPER", toteOnBumper());
         SmartDashboard.putBoolean("bottomHall", lowerLimitSwitch.get());
+        SmartDashboard.putBoolean("TopSwitch", upperLimitSwitch.get());
         SmartDashboard.putNumber("TOTE_COUNT", getToteCount());
         SmartDashboard.putNumber("MAN_TOTE", getManualToteCount());
     }

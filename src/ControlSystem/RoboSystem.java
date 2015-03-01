@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.VictorSP;
 
 public class RoboSystem{
+	private Solenoid totePush;
+	
     
     private static RoboSystem instance = null;
     private Compressor comp;
@@ -33,8 +35,14 @@ public class RoboSystem{
     	elevator = Elevator.getInstance();
     	intake1 = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER1);
 //    	intake2 = new Intake(Ports.INTAKE_ARM2,11);
+    	totePush = new Solenoid(Ports.TOTEPUSH);
     }
-    
+    public void extendtotePush(){
+    	totePush.set(true);
+    }
+    public void retracttotePush(){
+    	totePush.set(false);
+    }
     public void intakeRollersForward(){
     	intake1.rollerForward();
 //    	intake2.rollerForward();
