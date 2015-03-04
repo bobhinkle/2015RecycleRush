@@ -29,8 +29,8 @@ public class Ports {
     public static final int ELEVATOR_BOTTOM_LIMIT = 0;
     public static final int ELEVATOR_TOP_LIMIT = 4;
     public static final int ELEVATOR_ENC = 10; 
-    public static final int NAV_X_ENC = 14;
-    public static final int NAV_Y_ENC = 16;
+    public static final int NAV_X_ENC = 12;
+    public static final int NAV_Y_ENC = 14;
     public static final int TOTE_BUMPER = 1;
     //ANALOG INPUTS
     
@@ -43,8 +43,8 @@ public class Ports {
     public static final int GYRO2		   = 1;
     
     //SOLENOIDS
-    public static final int STATIONARY_WANG = 0;
+    public static final int TWO_CAN_DONGERS = 3;
+    public static final int TOTEPUSH = 4;
     public static final int INTAKE_ARM = 6;
-    public static final int TOP_REVERSE_CARRIAGE_ARMS = 7;
-    public static final int TOTEPUSH = 5;
+    public static final int REVERSE_CARRIAGE_TOTE_HOOK = 7; 
 }

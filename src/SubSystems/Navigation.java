@@ -9,13 +9,17 @@ import edu.wpi.first.wpilibj.Gyro;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.PIDSource;
+import edu.wpi.first.wpilibj.SerialPort;
+import edu.wpi.first.wpilibj.SerialPort.Parity;
+import edu.wpi.first.wpilibj.SerialPort.StopBits;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Navigation implements PIDSource{
 	
 	   // Sensors
-    protected SuperEncoder followerWheel;
+    protected SuperEncoder followerWheelX;
+    protected SuperEncoder followerWheelY;
     protected GyroThread gyro;
 //    Gyro gyro;
     Gyro gyro2;
@@ -28,11 +32,15 @@ public class Navigation implements PIDSource{
     private boolean topGoalFound = false;
     private boolean twoGyro = false;
     private double angle = 0;
+    private SerialPort arduino;
     private Navigation()
     {
-        followerWheel = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,false,1);
-        followerWheel.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
-        followerWheel.start();
+        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,true,1);
+        followerWheelX.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
+        followerWheelX.start();
+        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,true,1);
+        followerWheelY.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
+        followerWheelY.start();
 //        lights = Lights.getInstance();
 //        lights.setState(Lights.GYRO_INIT);
         gyro = new GyroThread();
@@ -43,6 +51,11 @@ public class Navigation implements PIDSource{
         if(twoGyro){
 	        gyro2 = new Gyro(Ports.GYRO2);
 	        gyro2.initGyro();
+        }
+        try{
+        	arduino = new SerialPort(115200, SerialPort.Port.kUSB,8, Parity.kNone,StopBits.kOne);
+        }catch(Exception ignored){
+        	SmartDashboard.putString("ARD", "ERROR");
         }
     }
     public static Navigation getInstance()
@@ -63,7 +76,8 @@ public class Navigation implements PIDSource{
     {
         this.x = x;
         this.y = y;
-        followerWheel.reset();
+        followerWheelX.reset();
+        followerWheelY.reset();
         if(gyroReset){
             gyro.rezero();
 //        	gyro.reset();
@@ -105,18 +119,23 @@ public class Navigation implements PIDSource{
     public synchronized void run()
     {
         updatePosition();
-        SmartDashboard.putNumber("Distance",getDistance());
-        SmartDashboard.putNumber("RawDistance",followerWheel.getRaw());
+/*        try{
+        	SmartDashboard.putString("ARD", arduino.readString());
+        }catch(Exception ignored){
+        	SmartDashboard.putString("ARD", "ERROR");
+        }*/
+        SmartDashboard.putNumber("X",getX());
+        SmartDashboard.putNumber("Y",getY());
+        SmartDashboard.putNumber("RawDistanceX",followerWheelX.getRaw());
+        SmartDashboard.putNumber("RawDistanceY",followerWheelY.getRaw());
         SmartDashboard.putNumber("Heading",getHeadingInDegrees());
         SmartDashboard.putNumber("RawHeading",getRawHeading());
-        if(twoGyro){
-        	
-        }
+        
     }
 
     public double getFollowerWheelDistance()
     {
-        return followerWheel.getDistance();
+        return followerWheelX.getDistance();
     }
 
     public double getDistance(){
@@ -124,8 +143,8 @@ public class Navigation implements PIDSource{
     }
     public void updatePosition()
     {
-//        basicDistance = (followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0;
-        basicDistance = followerWheel.getDistance();
+    	y = followerWheelY.getDistance();
+        x = followerWheelX.getDistance();
         if(twoGyro){
             angle = (gyro.getAngle() + gyro2.getAngle())/1.0;
             SmartDashboard.putNumber("GYRO_HEADING2", gyro2.getAngle());
@@ -150,7 +169,7 @@ public class Navigation implements PIDSource{
     public class Distance implements PIDSource {
     
         public double pidGet(){
-            return basicDistance = followerWheel.getDistance();
+            return basicDistance = followerWheelX.getDistance();
         }
     }
 	

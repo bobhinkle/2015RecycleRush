@@ -14,7 +14,7 @@ import Utilities.Util;
 public class GyroThread {
 
     private static final int K_READING_RATE = 200;
-    private static final int K_ZEROING_SAMPLES = 6 * K_READING_RATE;
+    private static final int K_ZEROING_SAMPLES = 10 * K_READING_RATE;
     private static final int K_STARTUP_SAMPLES = 2 * K_READING_RATE;
 
     // synchronized access object

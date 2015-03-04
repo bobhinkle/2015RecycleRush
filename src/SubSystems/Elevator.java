@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Elevator extends SynchronousPID implements Controller
 {
-    private VictorSP drive,drive2;
+    private VictorSP drive;
     private SuperEncoder eleEnc;
     private DigitalInput lowerLimitSwitch;
     private DigitalInput upperLimitSwitch;
@@ -26,7 +26,7 @@ public class Elevator extends SynchronousPID implements Controller
     private static Elevator instance = null;
     private int toteCounter = 0;
     private int manualToteCount = 0;
-    private Solenoid topArms;
+    private Solenoid topStackHooks;
     public static Elevator getInstance()
     {
         if( instance == null )
@@ -38,7 +38,6 @@ public class Elevator extends SynchronousPID implements Controller
     {
         loadProperties();
         drive = new VictorSP(Ports.ELEVATOR);
-//        drive2 = new VictorSP(Ports.ELEVATOR2);
         eleEnc = new SuperEncoder(Ports.ELEVATOR_ENC,Ports.ELEVATOR_ENC+1,false,SuperEncoder.HIGH_RESOLUTION);//comp false
         eleEnc.setPIDReturn(SuperEncoder.PID_DISTANCE);
         eleEnc.setDistancePerPulse(Constants.ELEVATOR_DISTANCE_PER_PULSE);
@@ -50,7 +49,7 @@ public class Elevator extends SynchronousPID implements Controller
         goalPosition = eleEnc.getDistance();
         this.setInputRange(Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT);
         this.setOutputRange(-Math.abs(Constants.ELEVATOR_MAX_POWER), Math.abs(Constants.ELEVATOR_MAX_POWER));
-        topArms = new Solenoid(Ports.TOP_REVERSE_CARRIAGE_ARMS);
+        topStackHooks = new Solenoid(Ports.REVERSE_CARRIAGE_TOTE_HOOK);
     }
 
     public synchronized void setGoal(double goalDistance)
@@ -115,11 +114,11 @@ public class Elevator extends SynchronousPID implements Controller
     public boolean lineBreakTrigger(){
     	return lineBreak.getDistance() > 2.2;
     }
-    public void stackHold(){
-    	topArms.set(false);
+    public void closeTopStackHook(){
+    	topStackHooks.set(false);
     }
-    public void stackRelease(){
-    	topArms.set(true);
+    public void openTopStackHook(){
+    	topStackHooks.set(true);
     }
     public void lowerP(){
         double p = this.getP();
@@ -161,11 +160,11 @@ public class Elevator extends SynchronousPID implements Controller
             this.setGoal(Util.limit(this.goalPosition + inches, Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT));
         }        
     }
-    public void manualUp(){
-        drive.set(0.4);
+    public void manualUp(double height){
+    	this.setGoal(this.getSetpoint() + (height * 2.0));
     }
-    public void manualDown(){
-        drive.set(-0.4);
+    public void manualDown(double height){
+    	this.setGoal(this.getSetpoint() - (height*2.0));
     }
     public void manualStop(){
         drive.set(0);
@@ -218,7 +217,7 @@ public class Elevator extends SynchronousPID implements Controller
         	onTargetCounter = onTargetThresh;
             isOnTarget = false;
         }
-        
+        power = Util.deadBand(power, 0.1);
     	drive.set(-power);
 //    	drive2.set(power);
         SmartDashboard.putNumber("ELE_HEIGHT", current);

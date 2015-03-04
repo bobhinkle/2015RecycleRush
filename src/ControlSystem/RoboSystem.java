@@ -18,7 +18,8 @@ public class RoboSystem{
     public DriveTrain dt;
     public Arduino ahrs;
     public Elevator elevator;
-    private Intake intake1, intake2;
+    private Intake intake1;
+    private Solenoid hl_arm;
     
     public static RoboSystem getInstance()
     {
@@ -34,8 +35,20 @@ public class RoboSystem{
     	ahrs = Arduino.getInstance();
     	elevator = Elevator.getInstance();
     	intake1 = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER1);
-//    	intake2 = new Intake(Ports.INTAKE_ARM2,11);
     	totePush = new Solenoid(Ports.TOTEPUSH);
+    	hl_arm = new Solenoid(Ports.TWO_CAN_DONGERS);
+    }
+    public void extendHLArm(){
+    	hl_arm.set(true);
+    }
+    public void retarctHLArm(){
+    	hl_arm.set(false);
+    }
+    public void actuateHLArm(){
+    	if(hl_arm.get())
+    		hl_arm.set(false);
+    	else
+    		hl_arm.set(true);
     }
     public void extendtotePush(){
     	totePush.set(true);
@@ -45,17 +58,14 @@ public class RoboSystem{
     }
     public void intakeRollersForward(){
     	intake1.rollerForward();
-//    	intake2.rollerForward();
     }
     
     public void intakeRollersReverse(){
     	intake1.rollersReverse();
-//    	intake2.rollersReverse();
     }
     
     public void intakeRollersStop(){
     	intake1.rollersStop();
-//    	intake2.rollersStop();
     }
     public void actuateArm(){
     	intake1.actuateArm();
