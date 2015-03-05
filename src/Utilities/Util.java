@@ -190,15 +190,16 @@ public class Util {
     	return angle - 270.0;
     }
     public static String joinStrings(String delim, List<?> strings) {
-  	  StringBuilder sb = new StringBuilder();
-  	  for (int i = 0; i < strings.size(); ++i) {
-  		  sb.append(strings.get(i).toString());
-  		  if (i < strings.size() - 1) {
-  			  sb.append(delim);
-  		  }
-  	  }
-  	  return sb.toString();
-    } 
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < strings.size(); ++i) {
+            sb.append(strings.get(i).toString());
+            if (i < strings.size() - 1) {
+                sb.append(delim);
+            }
+        }
+        return sb.toString();
+    }
+
     
     public static double xyToAngle(double x, double y){
     	if(x == 0 && y == 1)

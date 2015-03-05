@@ -28,17 +28,16 @@ public class Navigation implements PIDSource{
     private double y = 0.0; // positive from driver looking left
     private static Navigation instance;
     private double basicDistance = 0;
-    private double topGoalPosition = 360;
-    private boolean topGoalFound = false;
     private boolean twoGyro = false;
     private double angle = 0;
     private SerialPort arduino;
+    
     private Navigation()
     {
-        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,true,1);
+        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,false,1);
         followerWheelX.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelX.start();
-        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,true,1);
+        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,false,1);
         followerWheelY.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelY.start();
 //        lights = Lights.getInstance();
@@ -97,7 +96,7 @@ public class Navigation implements PIDSource{
 
     public double getHeadingInDegrees()
     {
-        return Util.boundAngle0to360Degrees(gyro.getAngleInDegrees());
+        return Util.boundAngle0to360Degrees(gyro.getAngle());
     }
     public double getRawHeading(){
 //        return gyro.getAngle();
@@ -149,9 +148,9 @@ public class Navigation implements PIDSource{
             angle = (gyro.getAngle() + gyro2.getAngle())/1.0;
             SmartDashboard.putNumber("GYRO_HEADING2", gyro2.getAngle());
         }else{
-            angle = gyro.getAngleInDegrees();
+            angle = gyro.getAngle() + Constants.STARTING_ANGLE_OFFSET;
         }
-        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngleInDegrees());
+        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngle());
         /*
         double distanceTravelled = ((followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0) - distanceLast;
         double timePassed = System.currentTimeMillis() - timeLast;
@@ -163,13 +162,12 @@ public class Navigation implements PIDSource{
         timeLast = System.currentTimeMillis();*/
     }
     public double pidGet() {
-        return basicDistance;
+        return getY();
     }
     
     public class Distance implements PIDSource {
-    
         public double pidGet(){
-            return basicDistance = followerWheelX.getDistance();
+            return basicDistance = followerWheelY.getDistance();
         }
     }
 	

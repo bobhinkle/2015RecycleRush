@@ -8,11 +8,6 @@ import java.util.List;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.SPI;
 
-
-/**
- * Deals with the SPI interface to the gyro. Datasheet for the command used here can be found at:
- * "http://www.analog.com/static/imported-files/data_sheets/ADXRS453.pdf
- */
 public class GyroInterface {
     // states according to ST1/ST0 bits
     public static enum StatusFlag {
@@ -55,6 +50,7 @@ public class GyroInterface {
 
     /**
      * Initializes the gyro
+     *
      * @throws GyroException If the initialization routine fails for any reason
      */
     public void initializeGyro() throws GyroException {
@@ -68,7 +64,8 @@ public class GyroInterface {
         // wait for the fault conditions to occur
         try {
             Thread.sleep(50);
-        } catch (InterruptedException ignored) {}
+        } catch (InterruptedException ignored) {
+        }
 
         // clear latched non-fault data
         doTransaction(SENSOR_DATA_CMD);
@@ -104,12 +101,12 @@ public class GyroInterface {
                 System.out.println("Unexpected gyro read response: 0x" + Integer.toHexString(result) + " ... retrying");
                 continue;
             }
-            return (short)((result >> 5) & 0xFFFF);
+            return (short) ((result >> 5) & 0xFFFF);
         }
     }
 
     public static double extractAngleRate(int result) {
-        short reading = (short)((result >> 10) & 0xFFFF);
+        short reading = (short) ((result >> 10) & 0xFFFF);
         return reading * 2.0 * Math.PI / 360.0 / 80.0;
     }
 
@@ -118,7 +115,7 @@ public class GyroInterface {
     }
 
     public int readSerialNumber() {
-        return (((int)doRead((byte) 0x0E)) << 16) | (int)doRead((byte) 0x10);
+        return (((int) doRead((byte) 0x0E)) << 16) | (int) doRead((byte) 0x10);
     }
 
     public int getReading() throws GyroException {
@@ -164,16 +161,21 @@ public class GyroInterface {
     public static StatusFlag extractStatus(int result) {
         int stBits = (result >> 26) & 0b11;
         switch (stBits) {
-            case 0b00: return StatusFlag.INVALID_DATA;
-            case 0b01: return StatusFlag.VALID_DATA;
-            case 0b10: return StatusFlag.SELF_TEST_DATA;
-            case 0b11: return StatusFlag.RW_RESPONSE;
-            default: throw new RuntimeException("wtf");
+            case 0b00:
+                return StatusFlag.INVALID_DATA;
+            case 0b01:
+                return StatusFlag.VALID_DATA;
+            case 0b10:
+                return StatusFlag.SELF_TEST_DATA;
+            case 0b11:
+                return StatusFlag.RW_RESPONSE;
+            default:
+                throw new RuntimeException("wtf");
         }
     }
 
     public static List<ErrorFlag> extractErrors(int result) {
-    	ArrayList<ErrorFlag> errors = new ArrayList<ErrorFlag>(ErrorFlag.values().length);
+        ArrayList<ErrorFlag> errors = new ArrayList<ErrorFlag>(ErrorFlag.values().length);
         for (ErrorFlag errorFlag : ErrorFlag.values()) {
             if ((result & (1 << errorFlag.mBit)) != 0) {
                 errors.add(errorFlag);

@@ -1,5 +1,6 @@
 package IO;import ControlSystem.FSM;
 import ControlSystem.RoboSystem;
+import ControlSystem.FSM.State;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Joystick.RumbleType;
 
@@ -17,6 +18,7 @@ public class TeleController
     private FSM fsm;
     private RoboSystem robot;
     private static TeleController instance = null;
+    private boolean robotCentric = true;
     public TeleController(){
         driver = new Xbox(0);
         driver.init();
@@ -46,7 +48,17 @@ public class TeleController
         }
         ///////////////////////////////////////
         if(codriver.yButton.isPressed()){
-        	fsm.setGoalState(FSM.State.RC_LOAD);
+        	switch(fsm.previousState()){
+        	case RC_LOAD_WAITING:
+        		fsm.setGoalState(State.RC_ARM_CLOSE);
+        		break;
+        	case RC_ARM_CLOSE:
+        		fsm.setGoalState(State.RC_INTAKING);
+        		break;
+        	default:
+        		fsm.setGoalState(FSM.State.RC_LOAD);
+        		break;
+        	}        	
         }
         /////////////////////////////////////////////
 
@@ -81,9 +93,9 @@ public class TeleController
             
         }
         ///////////////////////////////////////////////
-        if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0) {
+        if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0.3) {
             robot.elevator.manualDown(Xbox.LEFT_STICK_Y);
-        }else if( codriver.getButtonAxis(Xbox.LEFT_STICK_Y) < 0){
+        }else if( codriver.getButtonAxis(Xbox.LEFT_STICK_Y) < -0.3){
         	robot.elevator.manualUp(Xbox.LEFT_STICK_Y);
         }
         ///////////////////////////////////////////////
@@ -92,7 +104,7 @@ public class TeleController
         }     
         ///////////////////////////////////////////////
         if(codriver.rightCenterClick.isPressed()) {
-        	//scoring state
+        	fsm.setGoalState(FSM.State.SCORING);
         }
         if(codriver.getPOV() == 0){
         	robot.elevator.increaseManualToteCount();
@@ -118,16 +130,20 @@ public class TeleController
         }else if(driver.yButton.isPressed()){
         	robot.dt.setHeading(0);
         }else{
-        	robot.dt.sendInput(Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_X),0.15), Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_Y),0.15), Util.deadBand(driver.getButtonAxis(Xbox.RIGHT_STICK_X), 0.2),driver.leftTrigger.isHeld(),driver.leftBumper.isHeld());
+        	robot.dt.sendInput(Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_X),0.2), Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_Y),0.2), Util.deadBand(driver.getButtonAxis(Xbox.RIGHT_STICK_X), 0.2),driver.leftTrigger.isHeld(),robotCentric,true);
         }        
     	
         //////////////////////////////////
         if(driver.rightTrigger.isPressed()) {
         	fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
         }
+        /////////////////////////////////////////////////////
+        if(driver.leftBumper.isPressed()){
+        	robotCentric = false;
+        }
         ///////////////////////////////////////////////////////
         if(driver.rightBumper.isPressed()){
-        	
+        	robotCentric = true;
         }
         
         //////////////////////////////////////////////////////

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import Utilities.Util;
 
 
@@ -14,7 +13,7 @@ import Utilities.Util;
 public class GyroThread {
 
     private static final int K_READING_RATE = 200;
-    private static final int K_ZEROING_SAMPLES = 10 * K_READING_RATE;
+    private static final int K_ZEROING_SAMPLES = 6 * K_READING_RATE;
     private static final int K_STARTUP_SAMPLES = 2 * K_READING_RATE;
 
     // synchronized access object
@@ -25,7 +24,11 @@ public class GyroThread {
     // thread communication variables
     private volatile boolean mVolatileHasData = false;
     private volatile double mVolatileAngle = 0;
+    private volatile double mVolatileRate = 0;
     private volatile boolean mVolatileShouldReZero = true;
+
+    // owned by the accesser of this object
+    private double mZeroHeading = 0;
 
     public void start() {
         synchronized (mTimer) {
@@ -38,13 +41,19 @@ public class GyroThread {
     }
 
     public double getAngle() {
-        return mVolatileAngle;
+        return mVolatileAngle - mZeroHeading;
     }
-    public double getAngleInDegrees(){
-    	return mVolatileAngle*(180.0/Math.PI);
+
+    public double getRate() {
+        return mVolatileRate;
     }
+
     public void rezero() {
         mVolatileShouldReZero = true;
+    }
+
+    public void reset() {
+        mZeroHeading = mVolatileAngle;
     }
 
     /**
@@ -82,6 +91,8 @@ public class GyroThread {
         private boolean mHasEnoughZeroingSamples;
         private double mZeroBias;
         private double mAngle = 0;
+        private double mLastAngle = 0;
+        private double mLastTime = 0;
 
         @Override
         public void run() {
@@ -95,11 +106,8 @@ public class GyroThread {
             GyroInterface.StatusFlag status = GyroInterface.extractStatus(reading);
             List<GyroInterface.ErrorFlag> errors = GyroInterface.extractErrors(reading);
             if (GyroInterface.StatusFlag.VALID_DATA != status || !errors.isEmpty()) {
-            	SmartDashboard.putString("GYRO_ERROR", "FAIL");
                 System.out.println("Gyro read failed. Status: " + status + ". Errors: " + Util.joinStrings(", ", errors));
                 return;
-            }else{
-            	SmartDashboard.putString("GYRO_ERROR", "Go");
             }
 
             if (mRemainingStartupCycles > 0) {
@@ -132,7 +140,12 @@ public class GyroThread {
                 return;
             }
 
-            mAngle += (unbiasedAngleRate - mZeroBias) / K_READING_RATE;
+            double now = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+            double timeElapsed = mLastTime == 0 ? 1.0 / K_READING_RATE : now - mLastTime;
+            mLastTime = now;
+
+            mVolatileRate = unbiasedAngleRate - mZeroBias;
+            mAngle += mVolatileRate * timeElapsed;
             mVolatileAngle = mAngle;
             mVolatileHasData = true;
         }

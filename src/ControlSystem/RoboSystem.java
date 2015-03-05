@@ -19,7 +19,8 @@ public class RoboSystem{
     public Arduino ahrs;
     public Elevator elevator;
     private Intake intake1;
-    private Solenoid hl_arm;
+    private Solenoid follower_wheel;
+    private Solenoid latchRelease;
     
     public static RoboSystem getInstance()
     {
@@ -36,25 +37,32 @@ public class RoboSystem{
     	elevator = Elevator.getInstance();
     	intake1 = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER1);
     	totePush = new Solenoid(Ports.TOTEPUSH);
-    	hl_arm = new Solenoid(Ports.TWO_CAN_DONGERS);
+    	follower_wheel = new Solenoid(Ports.FOLLOWER_WHEEL);
+    	latchRelease = new Solenoid(Ports.LATCHRELEASE);
     }
-    public void extendHLArm(){
-    	hl_arm.set(true);
+    public void extendFollowerWheel(){
+    	follower_wheel.set(false);
     }
-    public void retarctHLArm(){
-    	hl_arm.set(false);
+    public void retarctFollowerWheel(){
+    	follower_wheel.set(true);
     }
     public void actuateHLArm(){
-    	if(hl_arm.get())
-    		hl_arm.set(false);
+    	if(follower_wheel.get())
+    		follower_wheel.set(false);
     	else
-    		hl_arm.set(true);
+    		follower_wheel.set(true);
     }
     public void extendtotePush(){
     	totePush.set(true);
     }
     public void retracttotePush(){
     	totePush.set(false);
+    }
+    public void retractlatchRelease(){
+    	latchRelease.set(false);
+    }
+    public void extendlatchRelease(){
+    	latchRelease.set(true);
     }
     public void intakeRollersForward(){
     	intake1.rollerForward();

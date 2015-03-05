@@ -17,14 +17,16 @@ public class DriveTrain{
 	private SwerveDriveModule rearRight;
 //	private static double R = Math.sqrt(Math.pow(Constants.WHEELBASE_LENGTH,2.0) + Math.pow(Constants.WHEELBASE_WIDTH,2.0))/2.0;
 	private static double R = 39.52216348;
-	private double xInput,yInput,rotateInput;
+	private double xInput,yInput,rotateInput = 0;
 	private double inputTimeStamp = 0.0;
 	private double pointOfRotationX = 0.0;
 	private double pointOfRotationY = 0.0;
 	private Navigation nav;
 	public HeadingController heading;
-	private boolean useHeadingController = true;
-	private boolean setHeading = true;
+	public DistanceController distance;
+	private boolean useHeadingController = false;
+	private boolean useDistanceController = false;
+	private boolean turn45 = false;
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
@@ -32,6 +34,7 @@ public class DriveTrain{
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_MA3,Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4);
 		nav = Navigation.getInstance();
 		heading = new HeadingController();
+		distance = new DistanceController();
 	}
 	public static DriveTrain getInstance()
     {
@@ -39,44 +42,33 @@ public class DriveTrain{
             instance = new DriveTrain();
         return instance;
     }
-	public void sendInput(double x, double y, double rotate,boolean halfPower,boolean robotCentric){
+	public void sendInput(double x, double y, double rotate,boolean halfPower,boolean robotCentric,boolean setHeading2){
 		double angle = nav.getRawHeading()/180.0*Math.PI;
 		if(!halfPower){
-			y = y/2.0;
-			x = x/2.0;
+			y = y * 0.6;
+			x = x * 0.6;
 		}
 		if(robotCentric){
 			xInput = x;
 			yInput = -y;
 			rotateInput = rotate;
 			useHeadingController = false;
-			setHeading = true;
+			turn45 = false;
+			heading.setGoal(heading.getSetpoint() + (Constants.MAX_ROTATION_ANGLE_PER_SEC * rotate));
 		}else{
 			xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 			yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
-			useHeadingController = true;
+			turn45 = false;
 			if(rotate != 0){
+				useHeadingController = false;
+				rotateInput = rotate;
 				heading.setGoal(heading.getSetpoint() + (Constants.MAX_ROTATION_ANGLE_PER_SEC * rotate));
-			}else{
-				setHeading = false;
-			}
-		}
-		
-		
-		
-/*		if(rotate == 0){
-			if(setHeading){
-				heading.reset();
-				setHeading = false;
 			}else{
 				useHeadingController = true;
 				heading.run();
+				//rotateInput = rotate;
 			}
-		}else{
-			useHeadingController = false;
-			setHeading = true;
-			rotateInput = rotate;
-		}*/
+		}
 		SmartDashboard.putNumber("X Input", xInput);
 		SmartDashboard.putNumber("Y Input", yInput);
 		SmartDashboard.putNumber("Rotate Input", rotateInput);
@@ -190,12 +182,12 @@ public class DriveTrain{
 	}
 	private void update(){
 		if(xInput == 0 && yInput == 0 && rotateInput == 0){
-/*			if(!no45){
+			if(turn45){
 				frontLeft.setGoal(135.0);
 				frontRight.setGoal(45.0);
 				rearLeft.setGoal(45.0);
 				rearRight.setGoal(-45.0);
-			}*/
+			}
 			frontLeft.setDriveSpeed(0.0);
 			frontRight.setDriveSpeed(0.0);
 			rearLeft.setDriveSpeed(0.0);
@@ -241,6 +233,105 @@ public class DriveTrain{
 	public void setHeading(double angle){
 		heading.setGoal(angle);
 	}
+	
+	public enum Axis{
+    	X, Y, BOTH
+    }
+	public class DistanceController extends FeedforwardPIV implements Controller
+	{
+	    public static final double kLoopRate = 200.0;
+	    private double lastDistance = 0;
+	    private TrajectorySmoother trajectory;
+	    private static final int onTargetThresh = 10;
+	    private int onTargetCounter = onTargetThresh;
+	    private static final double kOnTargetToleranceDegrees = Constants.DISTANCE_TOLERANCE;
+	    private Axis motion = Axis.Y;
+	    public DistanceController()
+	    {
+	    	loadProperties();
+	    }
+	    public synchronized void setGoal(double goalDistance)
+	    {
+	    	reset();
+	    	useDistanceController = true;
+	    	this.setSetpoint(goalDistance);
+	    }
+	    
+	    public synchronized void reset()
+	    {
+	        lastDistance = nav.getY();
+	        setGoal(lastDistance);
+	        onTargetCounter = onTargetThresh;
+	    }
+	    public void setAxis(Axis axis){
+	    	motion = axis;
+	    }
+	    public synchronized void run()
+	    {
+	    	double x = 0,y = 0;
+	    	double angle = nav.getRawHeading()/180.0*Math.PI;
+	    	double current = nav.getY();
+	        double position = this.getSetpoint() - current;
+	        double velocity = (current- lastDistance) * kLoopRate;
+	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
+	        double output = this.calculate(this.getSetpoint(), Constants.DIST_MAX_VEL, Constants.DIST_MAX_ACCEL, current, velocity, 1.0/kLoopRate);
+	        if(useDistanceController){
+		        if(!Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees))
+		        {
+		        	switch(motion){
+		        	case X:
+		        		xInput = output;
+		        		yInput = 0;
+		        		break;
+		        	case Y:
+		        		xInput = 0;
+		        		yInput = output;
+		        		break;
+		        	case BOTH:
+		        		xInput = output;
+		        		yInput = output;
+		        		break;
+		        	}
+		        	
+		            onTargetCounter = onTargetThresh;
+		        }
+		        else
+		        {
+		            onTargetCounter--;
+		            xInput = 0;
+	        		yInput = 0;
+		            if(onTarget()){
+		            	useDistanceController = false;
+		            }
+		        }
+		        xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
+				yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
+				turn45 = true;
+		        SmartDashboard.putNumber("X Input", xInput);
+				SmartDashboard.putNumber("Y Input", yInput);
+				SmartDashboard.putNumber("Rotate Input", rotateInput);
+				update();
+	        }	        
+	        lastDistance = current;
+	        SmartDashboard.putNumber("D_VELOCIY", velocity);
+	    }
+	    public final void loadProperties()
+	    {
+	        double kp = Constants.DIST_KP;
+	        double ki = Constants.DIST_KI;
+	        double kd = Constants.DIST_KD;
+	        double kfa = Constants.DIST_KFA;
+	        double kfv = Constants.DIST_KFV;
+	        setParams(kp, ki, kd, kfv, kfa);
+	        trajectory = new TrajectorySmoother(Constants.DIST_MAX_ACCEL,Constants.DIST_MAX_VEL);
+	        this.setOutputRange(-1.0, 1.0);
+	    }
+		@Override
+		public boolean onTarget() {
+			// TODO Auto-generated method stub
+			return onTargetCounter <= 0;
+		}
+	}
 	public class HeadingController extends FeedforwardPIV implements Controller
 	{
 	    public static final double kLoopRate = 200.0;
@@ -256,8 +347,6 @@ public class DriveTrain{
 	    }
 	    public synchronized void setGoal(double goalAngle)
 	    {
-	    	double bounded = Util.boundAngle0to360Degrees(nav.getRawHeading());
-//	    	if(goalAngle - bounded > (  180))
 	    	this.setSetpoint(goalAngle);
 	    }
 	    
@@ -270,10 +359,7 @@ public class DriveTrain{
 
 	    public synchronized void run()
 	    {
-	    	if(setHeading){
-	    		this.setGoal(nav.getRawHeading());
-	    	}
-	        double current = nav.getRawHeading();
+	    	double current = nav.getHeadingInDegrees();
 	        double position = Util.getDifferenceInAngleDegrees(this.getSetpoint(), current);
 	        double velocity = Util.getDifferenceInAngleDegrees(current, lastHeading) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
@@ -292,6 +378,7 @@ public class DriveTrain{
 	        }	        
 	        lastHeading = current;
 	        SmartDashboard.putNumber("T_VELOCIY", velocity);
+	        SmartDashboard.putNumber("T_GOAL", this.getSetpoint());
 	    }
 	    public final void loadProperties()
 	    {
@@ -302,6 +389,7 @@ public class DriveTrain{
 	        double kfv = Constants.TURN_KFV;
 	        setParams(kp, ki, kd, kfv, kfa);
 	        trajectory = new TrajectorySmoother(Constants.TURN_MAX_ACCEL,Constants.TURN_MAX_VEL);
+	        this.setInputRange(0, 360);
 	        this.setOutputRange(-1.0, 1.0);
 	    }
 		@Override
