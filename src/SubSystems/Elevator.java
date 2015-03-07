@@ -115,10 +115,10 @@ public class Elevator extends SynchronousPID implements Controller
     	return lineBreak.getDistance() > 2.2;
     }
     public void closeTopStackHook(){
-    	topStackHooks.set(false);
+    	topStackHooks.set(true);
     }
     public void openTopStackHook(){
-    	topStackHooks.set(true);
+    	topStackHooks.set(false);
     }
     public void lowerP(){
         double p = this.getP();
@@ -205,6 +205,7 @@ public class Elevator extends SynchronousPID implements Controller
             }else{
 	            if(goal <= 0 && lowerLimit){ //Elevator is at the bottom but goal is below current position. Reset to 0
 	                this.setGoal(0);
+	                power = 0;
 	            }else if(upperLimit){ //Elevator encoder is off and is trying to go beyond limit. Set goal to current height
 	            	this.setGoal(current);
 	            }else if(goal <= 0 && !lowerLimit){

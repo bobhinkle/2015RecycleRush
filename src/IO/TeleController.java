@@ -18,7 +18,7 @@ public class TeleController
     private FSM fsm;
     private RoboSystem robot;
     private static TeleController instance = null;
-    private boolean robotCentric = true;
+    private boolean robotCentric = false;
     public TeleController(){
         driver = new Xbox(0);
         driver.init();
@@ -79,14 +79,13 @@ public class TeleController
         }
         //////////////////////////////////////////////////////
         if(codriver.backButton.isPressed()){  // stop all 
-        	robot.elevator.resetManualToteCount();
         	fsm.fsmStopState();
         	robot.intakeRollersStop();
-        	driver.setRumble(RumbleType.kLeftRumble, (float)0.0);
         }
         ////////////////////////////////////////////////////////
         if(codriver.startButton.isPressed()){
-        	
+        	robot.elevator.resetManualToteCount();
+        	fsm.fsmStopState();
         }
         ////////////////////////////////////////////////////////        
         if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < 0) {
@@ -149,7 +148,7 @@ public class TeleController
         //////////////////////////////////////////////////////
         if(driver.backButton.isHeld()){  // 
         	fsm.nav.resetRobotPosition(0, 0, 0, true);
-    		System.out.println("backPressed");
+        	robot.dt.heading.setGoal(0.0);
         }
         ////////////////////////////////////////////////////////
         if(driver.startButton.isPressed()){

@@ -40,6 +40,9 @@ public class GyroThread {
         return mVolatileHasData;
     }
 
+    public double getAngleInDegrees(){
+    	return (180.0/Math.PI) * getAngle();
+    }
     public double getAngle() {
         return mVolatileAngle - mZeroHeading;
     }

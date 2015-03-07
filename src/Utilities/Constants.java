@@ -16,32 +16,32 @@ public class Constants {
     public static final double STEERING_D = 0.0;  //0.0
     public static final double INPUT_DELAY = 0.25;
     
-    public static final double DIST_KP = 0.008;
+    public static final double DIST_KP = 0.009;
     public static final double DIST_KI = 0.00; 
     public static final double DIST_KD = 0.000;
     public static final double DIST_KFV = 0.0001;
     public static final double DIST_KFA = 0.0001;
-    public static final double DIST_MAX_ACCEL = 800.0;
-    public static final double DIST_MAX_VEL = 4000.0;
+    public static final double DIST_MAX_ACCEL = 275.0;
+    public static final double DIST_MAX_VEL = 5500.0;
     		
     public static final double DIST_SMALL = 10;
     
-    public static final double DISTANCE_TOLERANCE = 0.3; //auton distance pid
+    public static final double DISTANCE_TOLERANCE = 2.0; //auton distance pid
     
-    public static final double TURN_KP = 0.001; //0.020
-    public static final double TURN_KI = 0.0000;
-    public static final double TURN_KD = 0.00;//0.02
-    public static final double TURN_KFV = 0.0001;
-    public static final double TURN_KFA = 0.0001;
+    public static final double TURN_KP = 0.022; //0.020
+    public static final double TURN_KI = 0.00;
+    public static final double TURN_KD = 0.001;//0.02
+    public static final double TURN_KFV = 0.0000; //0.0001
+    public static final double TURN_KFA = 0.0000; //0.0001
     public static final double TURN_ON_TARGET_DEG = 1;
-    public static final double TURN_MAX_ACCEL = 700.0;
-    public static final double TURN_MAX_VEL = 1700.0;
+    public static final double TURN_MAX_ACCEL = 25.0; //25
+    public static final double TURN_MAX_VEL = 900.0; //900
     public static final double MAX_ROTATION_ANGLE_PER_SEC = 2;
     ////////////////////////////////////////////////////////////////////////////////////////////
-    public static final double ELEVATOR_MAX_HEIGHT  = 34.0;   // MAXIMUM ELEVATOR HEIGHT 57
+    public static final double ELEVATOR_MAX_HEIGHT  = 22.0;   // MAXIMUM ELEVATOR HEIGHT 57
     public static final double ELEVATOR_MIN_HEIGHT  = -57;
     public static final double ELEVATOR_DISTANCE_PER_PULSE = (56/20780.0)*4.0;
-    public static final double ELEVATOR_P = 0.425;
+    public static final double ELEVATOR_P = 0.43;
     public static final double ELEVATOR_I = 0.001;
     public static final double ELEVATOR_D = 0.800;
     public static final double ELEVATOR_DOWN_P = 0.7; //0.003
@@ -49,7 +49,7 @@ public class Constants {
     public static final double ELEVATOR_DOWN_D = 0.00;
     public static final double ELEVATOR_MIN_POWER = 0.0; 
     public static final double ELEVATOR_MAX_POWER = 1.0; 
-    public static final double ELEVATOR_TOLERANCE = 0.15;
+    public static final double ELEVATOR_TOLERANCE = 0.75;
     public static final double ELEVATOR_INDEX_STATIONARY = 14.8;
     public static final double ELEVATOR_INDEX_PRE_TOTE = 14.8;
     public static final double ELEVATOR_HL_PICKUP	   = 11.0;

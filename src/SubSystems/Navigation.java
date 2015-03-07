@@ -78,7 +78,7 @@ public class Navigation implements PIDSource{
         followerWheelX.reset();
         followerWheelY.reset();
         if(gyroReset){
-            gyro.rezero();
+            gyro.reset();;
 //        	gyro.reset();
         }
         basicDistance = 0;
@@ -96,7 +96,7 @@ public class Navigation implements PIDSource{
 
     public double getHeadingInDegrees()
     {
-        return Util.boundAngle0to360Degrees(gyro.getAngle());
+        return Util.boundAngle0to360Degrees(gyro.getAngleInDegrees());
     }
     public double getRawHeading(){
 //        return gyro.getAngle();
@@ -148,9 +148,9 @@ public class Navigation implements PIDSource{
             angle = (gyro.getAngle() + gyro2.getAngle())/1.0;
             SmartDashboard.putNumber("GYRO_HEADING2", gyro2.getAngle());
         }else{
-            angle = gyro.getAngle() + Constants.STARTING_ANGLE_OFFSET;
+            angle = gyro.getAngleInDegrees() + Constants.STARTING_ANGLE_OFFSET;
         }
-        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngle());
+        SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngleInDegrees());
         /*
         double distanceTravelled = ((followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0) - distanceLast;
         double timePassed = System.currentTimeMillis() - timeLast;

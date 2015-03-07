@@ -43,9 +43,9 @@ public class Ports {
     public static final int GYRO2		   = 1;
     
     //SOLENOIDS
-    public static final int FOLLOWER_WHEEL = 3;
-    public static final int TOTEPUSH = 5;
-    public static final int LATCHRELEASE = 4;
-    public static final int INTAKE_ARM = 6;
-    public static final int REVERSE_CARRIAGE_TOTE_HOOK = 7; 
+    public static final int INTAKE_ARM = 0;
+    public static final int FOLLOWER_WHEEL = 1;
+    public static final int TOTEPUSH = 2;
+    public static final int LATCHRELEASE = 3;
+    public static final int REVERSE_CARRIAGE_TOTE_HOOK = 4; 
 }
