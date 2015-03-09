@@ -16,13 +16,13 @@ public class Constants {
     public static final double STEERING_D = 0.0;  //0.0
     public static final double INPUT_DELAY = 0.25;
     
-    public static final double DIST_KP = 0.009;
+    public static final double DIST_KP = 0.005;
     public static final double DIST_KI = 0.00; 
     public static final double DIST_KD = 0.000;
     public static final double DIST_KFV = 0.0001;
     public static final double DIST_KFA = 0.0001;
     public static final double DIST_MAX_ACCEL = 275.0;
-    public static final double DIST_MAX_VEL = 5500.0;
+    public static final double DIST_MAX_VEL = 3000.0;
     		
     public static final double DIST_SMALL = 10;
     
@@ -38,7 +38,7 @@ public class Constants {
     public static final double TURN_MAX_VEL = 900.0; //900
     public static final double MAX_ROTATION_ANGLE_PER_SEC = 2;
     ////////////////////////////////////////////////////////////////////////////////////////////
-    public static final double ELEVATOR_MAX_HEIGHT  = 22.0;   // MAXIMUM ELEVATOR HEIGHT 57
+    public static final double ELEVATOR_MAX_HEIGHT  = 18.5;   // MAXIMUM ELEVATOR HEIGHT 57
     public static final double ELEVATOR_MIN_HEIGHT  = -57;
     public static final double ELEVATOR_DISTANCE_PER_PULSE = (56/20780.0)*4.0;
     public static final double ELEVATOR_P = 0.43;

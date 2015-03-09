@@ -5,6 +5,7 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.TrajectorySmoother;
 import Utilities.Util;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -81,8 +82,10 @@ public class DriveTrain{
 		}
 		SmartDashboard.putNumber("X Input", xInput);
 		SmartDashboard.putNumber("Y Input", yInput);
-		SmartDashboard.putNumber("rotate", rotate);
-		SmartDashboard.putNumber("Rotate Input", rotateInput);
+		SmartDashboard.putNumber("rotate", rotateInput);
+		SmartDashboard.putNumber("X InputC", x);
+		SmartDashboard.putNumber("Y InputC", y);
+		SmartDashboard.putNumber("rotateC", rotate);
 		SmartDashboard.putBoolean("RobotCentric", robotCentric);
 		SmartDashboard.putBoolean("useHeadingController", useHeadingController);
 		update();
@@ -174,7 +177,7 @@ public class DriveTrain{
 		}
 		@Override
 		public boolean onTarget() {
-			// TODO Auto-generated method stub
+			// TODO Auto-generated  method stub
 			return false;
 		}
 		//find shortest path. reverse motor power if shortest distance is 180 degress from goal
@@ -250,6 +253,9 @@ public class DriveTrain{
 	public enum Axis{
     	X, Y, BOTH, BOTH_MINUS_X
     }
+	public void killDistanceController(){
+		useDistanceController = false;
+	}
 	public class DistanceController extends FeedforwardPIV implements Controller
 	{
 	    public static final double kLoopRate = 200.0;
@@ -433,10 +439,24 @@ public class DriveTrain{
 			return onTargetCounter <= 0;
 		}
 	}
-	public void driveDistanceHoldingHeading(double distance, Axis axis, double heading, boolean gyroReset){
+	double timeout = 0;
+	public void setTimeOut(double timer){
+		timeout = System.currentTimeMillis() + timer;
+	}
+	public void driveDistanceHoldingHeading(double distance, Axis axis, double heading, boolean gyroReset,double timer){
+		setTimeOut(timer);
 		nav.resetRobotPosition(0, 0, 0, gyroReset);
 		this.heading.setGoal(heading);
 		this.distance.setAxis(axis);
 		this.distance.setGoal(distance);
+	}
+	
+	public boolean runDC(){
+		if(this.distance.onTarget() || (timeout < System.currentTimeMillis())){
+			killDistanceController();
+			return false;
+		}else{
+			return true;
+		}
 	}
 }

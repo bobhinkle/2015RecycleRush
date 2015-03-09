@@ -18,7 +18,7 @@ public class RoboSystem{
     public DriveTrain dt;
     public Arduino ahrs;
     public Elevator elevator;
-    private Intake intake1;
+    private Intake intake;
     private Solenoid follower_wheel;
     private Solenoid latchRelease;
     
@@ -35,16 +35,16 @@ public class RoboSystem{
     	dt = DriveTrain.getInstance();
     	ahrs = Arduino.getInstance();
     	elevator = Elevator.getInstance();
-    	intake1 = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER1);
+    	intake = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER);
     	totePush = new Solenoid(Ports.TOTEPUSH);
     	follower_wheel = new Solenoid(Ports.FOLLOWER_WHEEL);
     	latchRelease = new Solenoid(Ports.LATCHRELEASE);
     }
     public void extendFollowerWheel(){
-    	follower_wheel.set(false);
+    	follower_wheel.set(true);
     }
     public void retarctFollowerWheel(){
-    	follower_wheel.set(true);
+    	follower_wheel.set(false);
     }
     public void actuateHLArm(){
     	if(follower_wheel.get())
@@ -64,27 +64,30 @@ public class RoboSystem{
     public void extendlatchRelease(){
     	latchRelease.set(true);
     }
+    public void toteGrabber(double power){
+    	intake.rollerManualPower(power);
+    }
     public void intakeRollersForward(){
-    	intake1.rollerForward();
+ //   	intake1.rollerForward();
     }
     
     public void intakeRollersReverse(){
-    	intake1.rollersReverse();
+ //   	intake1.rollersReverse();
     }
     
     public void intakeRollersStop(){
-    	intake1.rollersStop();
+//    	intake1.rollersStop();
     }
     public void actuateArm(){
-    	intake1.actuateArm();
+//    	intake1.actuateArm();
  //   	intake2.actuateArm();
     }
     public void openArm(){
-    	intake1.extendArm();
+ //   	intake1.extendArm();
  //   	intake2.extendArm();
     }
     public void closeArm(){
-    	intake1.retractArm();
+ //   	intake1.retractArm();
  //   	intake2.retractArm();
     }
     private class Intake{
@@ -108,7 +111,9 @@ public class RoboSystem{
         public void rollersStop(){
         	roller.set(0);
         }
-        
+        public void rollerManualPower(double power){
+        	roller.set(power);
+        }
         public void extendArm(){
         	arm.set(false);
         	intakeExtended = true;

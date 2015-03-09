@@ -78,7 +78,7 @@ public class GyroThread {
             }
             System.out.println("gyo initialized, part ID: 0x" + Integer.toHexString(mGyroInterface.readPartId()));
             synchronized (mTimer) {
-                mTimer.scheduleAtFixedRate(new UpdateTask(), 0, (int) (1000.0 / K_READING_RATE));
+                mTimer.schedule(new UpdateTask(), 0, (int) (1000.0 / K_READING_RATE));
             }
         }
     }

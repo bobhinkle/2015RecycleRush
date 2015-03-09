@@ -88,8 +88,10 @@ public class TeleController
         	fsm.fsmStopState();
         }
         ////////////////////////////////////////////////////////        
-        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < 0) {
-            
+        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.2 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < -0.2) {
+            robot.toteGrabber(codriver.getButtonAxis(Xbox.RIGHT_STICK_Y)*0.25);
+        }else{
+        	robot.toteGrabber(0);
         }
         ///////////////////////////////////////////////
         if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0.3) {
@@ -129,7 +131,7 @@ public class TeleController
         }else if(driver.yButton.isPressed()){
         	robot.dt.setHeading(0);
         }else{
-        	robot.dt.sendInput(Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_X),0.2), Util.deadBand(driver.getButtonAxis(Xbox.LEFT_STICK_Y),0.2), Util.deadBand(driver.getButtonAxis(Xbox.RIGHT_STICK_X), 0.2),driver.leftTrigger.isHeld(),robotCentric,true);
+        	robot.dt.sendInput(Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_X)), Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_Y)), Util.controlSmoother(driver.getButtonAxis(Xbox.RIGHT_STICK_X)),driver.leftTrigger.isHeld(),robotCentric,true);
         }        
     	
         //////////////////////////////////

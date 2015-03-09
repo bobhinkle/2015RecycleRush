@@ -20,10 +20,8 @@ public class Ports {
     public static final int REAR_RIGHT_DRIVE    = 4;
     public static final int REAR_RIGHT_ROTATION = 6;
     
-    public static final int ELEVATOR        	= 8;
-    public static final int ELEVATOR2			= 10;
-    public static final int INTAKE_ROLLER1  	= 9;
-    public static final int INTAKE_ROLLER2  	= 11;
+    public static final int ELEVATOR        	= 9; //8
+    public static final int INTAKE_ROLLER  	= 8; //9
     
     //DIGITAL INPUTS
     public static final int ELEVATOR_BOTTOM_LIMIT = 0;
