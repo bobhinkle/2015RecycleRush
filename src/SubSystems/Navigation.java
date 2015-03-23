@@ -6,22 +6,15 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Gyro;
-import edu.wpi.first.wpilibj.I2C;
-import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.PIDSource;
-import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.SerialPort.Parity;
-import edu.wpi.first.wpilibj.SerialPort.StopBits;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Navigation implements PIDSource{
 	
-	   // Sensors
+	// Sensors
     protected SuperEncoder followerWheelX;
     protected SuperEncoder followerWheelY;
     protected GyroThread gyro;
-//    Gyro gyro;
     Gyro gyro2;
     // Navigational state
     private double x = 0.0; // positive from driver facing center of the field
@@ -30,31 +23,20 @@ public class Navigation implements PIDSource{
     private double basicDistance = 0;
     private boolean twoGyro = false;
     private double angle = 0;
-    private SerialPort arduino;
-    
+    private double STARTING_ANGLE_OFFSET = 0.0;
     private Navigation()
     {
-        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,true,1);
+        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,false,1);
         followerWheelX.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelX.start();
-        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,true,1);
+        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,false,1);
         followerWheelY.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelY.start();
-//        lights = Lights.getInstance();
-//        lights.setState(Lights.GYRO_INIT);
         gyro = new GyroThread();
         gyro.start();
-//        lights.setState(Lights.GYRO_COMP);
-//        gyro = new Gyro(Ports.GYRO);
-//        gyro.initGyro();
         if(twoGyro){
 	        gyro2 = new Gyro(Ports.GYRO2);
 	        gyro2.initGyro();
-        }
-        try{
-        	arduino = new SerialPort(115200, SerialPort.Port.kUSB,8, Parity.kNone,StopBits.kOne);
-        }catch(Exception ignored){
-        	SmartDashboard.putString("ARD", "ERROR");
         }
     }
     public static Navigation getInstance()
@@ -78,10 +60,10 @@ public class Navigation implements PIDSource{
         followerWheelX.reset();
         followerWheelY.reset();
         if(gyroReset){
-            gyro.reset();;
-//        	gyro.reset();
+            gyro.reset();
         }
         basicDistance = 0;
+        STARTING_ANGLE_OFFSET = 0;
     }
     
     public synchronized double getX()
@@ -102,6 +84,9 @@ public class Navigation implements PIDSource{
 //        return gyro.getAngle();
         return angle;
     }
+    public double getRawHeadingInDegrees(){
+    	return Util.radsToDegrees(angle);
+    }
 
     public double getPitchInDegrees()
     {
@@ -118,18 +103,12 @@ public class Navigation implements PIDSource{
     public synchronized void run()
     {
         updatePosition();
-/*        try{
-        	SmartDashboard.putString("ARD", arduino.readString());
-        }catch(Exception ignored){
-        	SmartDashboard.putString("ARD", "ERROR");
-        }*/
         SmartDashboard.putNumber("X",getX());
         SmartDashboard.putNumber("Y",getY());
         SmartDashboard.putNumber("RawDistanceX",followerWheelX.getRaw());
         SmartDashboard.putNumber("RawDistanceY",followerWheelY.getRaw());
         SmartDashboard.putNumber("Heading",getHeadingInDegrees());
-        SmartDashboard.putNumber("RawHeading",getRawHeading());
-        
+        SmartDashboard.putNumber("RawHeading",getRawHeading());        
     }
 
     public double getFollowerWheelDistance()
@@ -148,18 +127,9 @@ public class Navigation implements PIDSource{
             angle = (gyro.getAngle() + gyro2.getAngle())/1.0;
             SmartDashboard.putNumber("GYRO_HEADING2", gyro2.getAngle());
         }else{
-            angle = gyro.getAngleInDegrees() + Constants.STARTING_ANGLE_OFFSET;
+            angle = gyro.getAngleInDegrees() + STARTING_ANGLE_OFFSET;
         }
         SmartDashboard.putNumber("GYRO_HEADING", gyro.getAngleInDegrees());
-        /*
-        double distanceTravelled = ((followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0) - distanceLast;
-        double timePassed = System.currentTimeMillis() - timeLast;
-        speedX = distanceTravelled/timePassed;
-        x += distanceTravelled * Math.cos(Math.toRadians(getHeadingInDegrees()));
-        y += distanceTravelled * Math.sin(Math.toRadians(getHeadingInDegrees()));
-
-        distanceLast = (followerWheel.getDistance() + rightDriveEncoder.getDistance())/2.0;
-        timeLast = System.currentTimeMillis();*/
     }
     public double pidGet() {
         return getY();
@@ -170,59 +140,4 @@ public class Navigation implements PIDSource{
             return basicDistance = followerWheelY.getDistance();
         }
     }
-	
-	private class L3GD20H{
-		private I2C i2c;
-		private final int address  = 0xD6;
-		private final int L3GD20_POLL_TIMEOUT = 100;         // Maximum number of read attempts
-	    private final int L3GD20_ID           = 0xD4;
-	    private final int L3GD20H_ID          = 0xD7;
-	    private final double GYRO_SENSITIVITY_250DPS  = 0.00875;    // Roughly 22/256 for fixed point match
-	    private final double GYRO_SENSITIVITY_500DPS  = 0.0175;     // Roughly 45/256
-	    private final double GYRO_SENSITIVITY_2000DPS = 0.070;      // Roughly 18/256
-	    
-	    private final int CTRL_REG1 = 0x20;
-	    private final int CTRL_REG2 = 0x21;
-	    private final int CTRL_REG  = 0x22;
-	    private final int CTRL_REG4 = 0x23;
-	    private final int CTRL_REG5 = 0x24;
-	    private final int OUT_X_L   = 0x28;
-	    private final int OUT_X_H   = 0x29;
-	    private final int OUT_Y_L   = 0x2A;
-	    private final int OUT_Y_H   = 0x2B;
-	    private final int OUT_Z_L   = 0x2C;
-	    private final int OUT_Z_H   = 0x2D;
-	    private byte[] x,y,z;
-	    
-		public L3GD20H(){
-			i2c = new I2C(Port.kOnboard,address);
-			x = new byte[2];
-			y = new byte[2];
-			z = new byte[2];
-			i2c.write(CTRL_REG1, 0x0F);
-			Timer.delay(0.1);
-			i2c.write(CTRL_REG4, 0x20);
-			Timer.delay(0.1);
-		}
-		public void getXValue(){
-			byte[] value = new byte[1];
-			i2c.write(address,OUT_X_L);
-			Timer.delay(0.04);
-			i2c.read(OUT_X_L, 1, value);
-			Timer.delay(0.04);
-			x[1] = value[0];
-			i2c.write(address,OUT_X_H);
-			Timer.delay(0.04);
-			i2c.read(OUT_X_L, 1, value);
-			x[0] = value[0];
-		}
-		byte[] ReadRegister(int Register){
-			byte[] result = new byte[2];
-			
-			return(result);  
-			}
-	}
-	
-	
-	
 }

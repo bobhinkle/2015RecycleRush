@@ -4,6 +4,7 @@ package ControlSystem;
 import Sensors.Arduino;
 import SubSystems.DriveTrain;
 import SubSystems.Elevator;
+import SubSystems.Lifter;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Solenoid;
@@ -21,7 +22,7 @@ public class RoboSystem{
     private Intake intake;
     private Solenoid follower_wheel;
     private Solenoid latchRelease;
-    
+    public Lifter lift;
     public static RoboSystem getInstance()
     {
         if( instance == null )
@@ -39,6 +40,7 @@ public class RoboSystem{
     	totePush = new Solenoid(Ports.TOTEPUSH);
     	follower_wheel = new Solenoid(Ports.FOLLOWER_WHEEL);
     	latchRelease = new Solenoid(Ports.LATCHRELEASE);
+    	lift = Lifter.getInstance();
     }
     public void extendFollowerWheel(){
     	follower_wheel.set(true);
@@ -59,36 +61,32 @@ public class RoboSystem{
     	totePush.set(false);
     }
     public void retractlatchRelease(){
-    	latchRelease.set(false);
-    }
-    public void extendlatchRelease(){
+    	System.out.println("RELEASED");
     	latchRelease.set(true);
     }
-    public void toteGrabber(double power){
-    	intake.rollerManualPower(power);
+    public void extendlatchRelease(){
+    	latchRelease.set(false);
     }
+    
     public void intakeRollersForward(){
- //   	intake1.rollerForward();
+    	intake.rollerForward();
     }
     
     public void intakeRollersReverse(){
- //   	intake1.rollersReverse();
+    	intake.rollersReverse();
     }
     
     public void intakeRollersStop(){
-//    	intake1.rollersStop();
+    	intake.rollersStop();
     }
     public void actuateArm(){
-//    	intake1.actuateArm();
- //   	intake2.actuateArm();
+    	intake.actuateArm();
     }
     public void openArm(){
- //   	intake1.extendArm();
- //   	intake2.extendArm();
+    	intake.extendArm();
     }
     public void closeArm(){
- //   	intake1.retractArm();
- //   	intake2.retractArm();
+    	intake.retractArm();
     }
     private class Intake{
     	private Solenoid arm;
@@ -115,12 +113,12 @@ public class RoboSystem{
         	roller.set(power);
         }
         public void extendArm(){
-        	arm.set(false);
+        	arm.set(true);
         	intakeExtended = true;
         }
         public void retractArm(){
         	intakeExtended = false;
-        	arm.set(true);
+        	arm.set(false);
         }
         public void actuateArm(){
         	if(intakeExtended){

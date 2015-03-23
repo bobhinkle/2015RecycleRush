@@ -1,6 +1,7 @@
 package IO;import ControlSystem.FSM;
 import ControlSystem.RoboSystem;
 import ControlSystem.FSM.State;
+import SubSystems.Lifter;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Joystick.RumbleType;
 
@@ -36,15 +37,17 @@ public class TeleController
     }    
     public void coDriver(){
         if(codriver.aButton.isPressed()){
-        	fsm.setGoalState(FSM.State.PRE_TOTE);
+        	fsm.clearLastTote();
+        	fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);        		
         }
         //////////////////////////////////////////
         if(codriver.bButton.isPressed()){
-        	fsm.setGoalState(FSM.State.HUMAN_LOAD_START);
+        	robot.lift.setState(Lifter.State.FORWARD_LOAD);
         }
         ////////////////////////////////////////
         if(codriver.xButton.isPressed()){
-        	fsm.bypassState();
+        	fsm.lastTote();
+        	fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);
         }
         ///////////////////////////////////////
         if(codriver.yButton.isPressed()){
@@ -68,6 +71,7 @@ public class TeleController
         //////////////////////////////////
         if(codriver.rightBumper.isPressed()) {
         	robot.intakeRollersForward();
+        	fsm.setGoalState(FSM.State.INTAKING_TOTE);
         }
         ///////////////////////////////////////////////////////
         if(codriver.leftTrigger.isPressed()){
@@ -80,6 +84,7 @@ public class TeleController
         //////////////////////////////////////////////////////
         if(codriver.backButton.isPressed()){  // stop all 
         	fsm.fsmStopState();
+        	robot.lift.setState(Lifter.State.STOP);
         	robot.intakeRollersStop();
         }
         ////////////////////////////////////////////////////////
@@ -88,10 +93,12 @@ public class TeleController
         	fsm.fsmStopState();
         }
         ////////////////////////////////////////////////////////        
-        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.2 || codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < -0.2) {
-            robot.toteGrabber(codriver.getButtonAxis(Xbox.RIGHT_STICK_Y)*0.25);
-        }else{
-        	robot.toteGrabber(0);
+        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.2) {
+        	robot.lift.setState(Lifter.State.MANUAL_DOWN);
+        }else if(codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < -0.2){
+        	robot.lift.setState(Lifter.State.MANUAL_UP);
+        }else if(robot.lift.getState() == Lifter.State.MANUAL_DOWN || robot.lift.getState() == Lifter.State.MANUAL_UP){
+        	robot.lift.setState(Lifter.State.STOP);
         }
         ///////////////////////////////////////////////
         if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0.3) {
@@ -127,11 +134,12 @@ public class TeleController
         }else if(driver.bButton.isPressed()){  
         	robot.dt.setHeading(90);
         }else if(driver.xButton.isPressed()){
-        	robot.dt.setHeading(270);
+        	robot.dt.setHeading(-90);
         }else if(driver.yButton.isPressed()){
         	robot.dt.setHeading(0);
         }else{
-        	robot.dt.sendInput(Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_X)), Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_Y)), Util.controlSmoother(driver.getButtonAxis(Xbox.RIGHT_STICK_X)),driver.leftTrigger.isHeld(),robotCentric,true);
+        	robot.dt.sendInput(Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_X)), Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_Y)), Util.turnControlSmoother(driver.getButtonAxis(Xbox.RIGHT_STICK_X)),driver.leftTrigger.isHeld(),robotCentric,true);
+//        	robot.dt.sendInputHeadingHold(Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_X)), Util.controlSmoother(driver.getButtonAxis(Xbox.LEFT_STICK_Y)),Util.turnControlSmoother(driver.getButtonAxis(Xbox.RIGHT_STICK_X)),driver.leftTrigger.isHeld());
         }        
     	
         //////////////////////////////////

@@ -219,8 +219,7 @@ public class Elevator extends SynchronousPID implements Controller
             isOnTarget = false;
         }
         power = Util.deadBand(power, 0.1);
-    	drive.set(-power);
-//    	drive2.set(power);
+//    	drive.set(-power);
         SmartDashboard.putNumber("ELE_HEIGHT", current);
         SmartDashboard.putNumber("ELE_GOAL", goalPosition);
         SmartDashboard.putNumber("ELE_POWER", power);

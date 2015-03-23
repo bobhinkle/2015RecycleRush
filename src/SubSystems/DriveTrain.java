@@ -5,7 +5,6 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.TrajectorySmoother;
 import Utilities.Util;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -29,6 +28,8 @@ public class DriveTrain{
 	private boolean useDistanceController = false;
 	private boolean setHeading = false;
 	private boolean turn45 = false;
+	private double headingControllerInput = 0;
+	
 	public DriveTrain(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_MA3,Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_MA3,Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1);
@@ -44,6 +45,26 @@ public class DriveTrain{
             instance = new DriveTrain();
         return instance;
     }
+	public void sendInputHeadingHold(double x, double y, double rotatex,boolean halfPower){
+		double angle = nav.getRawHeading()/180.0*Math.PI;		
+		if(!halfPower){
+			y = y * 0.6;
+			x = x * 0.6;
+		}
+		if(rotatex < -0.2 || rotatex > 0.2)
+			heading.setGoal(nav.getRawHeading() + (rotatex * 5.0));
+    	heading.run();
+    	rotateInput = Util.turnControlSmoother(headingControllerInput);
+	    xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
+		yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
+	    turn45 = false;
+	    SmartDashboard.putNumber("X Input", xInput);
+		SmartDashboard.putNumber("Y Input", yInput);
+		SmartDashboard.putNumber("rotate", rotateInput);
+		SmartDashboard.putNumber("X InputC", x);
+		SmartDashboard.putNumber("Y InputC", y);
+		update();
+	}
 	public void sendInput(double x, double y, double rotate,boolean halfPower,boolean robotCentric,boolean bypassHeadingController){
 		double angle = nav.getRawHeading()/180.0*Math.PI;
 		if(!halfPower){
@@ -60,23 +81,20 @@ public class DriveTrain{
 		}else{
 			xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 			yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
-			turn45 = false;
-			if(rotate != 0.0){
-				useHeadingController = false;
+			turn45 = true;
+			if(rotate < -0.2 || rotate > 0.2){
 				rotateInput = rotate;
 				setHeading = true;
 			}else{
 				if(setHeading){
-					heading.setGoal(nav.getRawHeading());
 					setHeading = false;
+					heading.setGoal(nav.getRawHeading());
+				}
+				if(bypassHeadingController){
+					rotateInput = rotate;
 				}else{
-					if(bypassHeadingController){
-						useHeadingController = false;
-						rotateInput = rotate;
-					}else{
-					useHeadingController = true;
 					heading.run();
-					}
+					rotateInput = Util.turnControlSmoother(headingControllerInput);
 				}
 			}			
 		}
@@ -300,7 +318,7 @@ public class DriveTrain{
 	        double velocity = (current- lastDistance) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
 	        double output = this.calculate(this.getSetpoint(), Constants.DIST_MAX_VEL, Constants.DIST_MAX_ACCEL, current, velocity, 1.0/kLoopRate);
-	        if(current > this.getSetpoint()){
+	        if(current > this.getSetpoint() && motion == Axis.X){
 	        	output = -output;
 	        }
 	        if(useDistanceController){
@@ -338,6 +356,7 @@ public class DriveTrain{
 		        }
 		        xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 				yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
+				rotateInput = headingControllerInput;
 //		        xInput = x;
 //		        yInput = -y;
 				turn45 = true;
@@ -381,7 +400,7 @@ public class DriveTrain{
 	    }
 	    public synchronized void setGoal(double goalAngle)
 	    {
-	        onTargetCounter = onTargetThresh;
+	    	reset();
 	    	this.setSetpoint(goalAngle);
 	    }
 	    
@@ -391,7 +410,9 @@ public class DriveTrain{
 	        this.setSetpoint(lastHeading);
 	        onTargetCounter = onTargetThresh;
 	    }
-
+	    public synchronized double getError(){
+	    	return nav.getRawHeading() - this.getSetpoint();
+	    }
 	    public synchronized void run()
 	    {
 	    	double current = nav.getRawHeading();
@@ -399,28 +420,27 @@ public class DriveTrain{
 	        double velocity = Util.getDifferenceInAngleDegrees(current, lastHeading) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
 	        double output = this.calculate(current);
-	        if(useHeadingController){
-		        if(!Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees))
-		        {
-		        	/*
-		        	if(current < this.getSetpoint())
-		        		rotateInput = output;
-		        	else{
-		        		rotateInput = -output;
-		        	}*/
-		        	rotateInput = output;
-		            onTargetCounter = onTargetThresh;
-		        }
-		        else
-		        {
-		            onTargetCounter--;
-		            rotateInput = 0;
-		        }
-	        }	        
+	        if(!Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees))
+	        {
+	        	/*
+	        	if(current < this.getSetpoint())
+	        		rotateInput = output;
+	        	else{
+	        		rotateInput = -output;
+	        	}*/
+	        	headingControllerInput = output;
+	            onTargetCounter = onTargetThresh;
+	        }
+	        else
+	        {
+	            onTargetCounter--;
+	            headingControllerInput = 0;
+	        }
 	        lastHeading = current;
 	        SmartDashboard.putNumber("T_DIFF", position);
 	        SmartDashboard.putNumber("T_VELOCIY", velocity);
 	        SmartDashboard.putNumber("T_GOAL", this.getSetpoint());
+	        SmartDashboard.putNumber("MOD", current%360.0);
 	    }
 	    public final void loadProperties()
 	    {
@@ -443,9 +463,11 @@ public class DriveTrain{
 	public void setTimeOut(double timer){
 		timeout = System.currentTimeMillis() + timer;
 	}
-	public void driveDistanceHoldingHeading(double distance, Axis axis, double heading, boolean gyroReset,double timer){
+	public void driveDistanceHoldingHeading(double distance, Axis axis, double heading, boolean gyroReset,double timer,boolean zeroPosition){
 		setTimeOut(timer);
-		nav.resetRobotPosition(0, 0, 0, gyroReset);
+		if(zeroPosition){
+			nav.resetRobotPosition(0, 0, 0, gyroReset);
+		}
 		this.heading.setGoal(heading);
 		this.distance.setAxis(axis);
 		this.distance.setGoal(distance);

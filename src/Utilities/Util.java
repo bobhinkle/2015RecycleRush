@@ -228,4 +228,27 @@ public class Util {
        else
     	   return 0;
     }
+    
+    double t,k1,k2,k3,m;
+    public void setTime(double acceleration, double distance){
+    	t = Math.sqrt((2*Math.PI*distance/acceleration));
+    }
+    public static double radsToDegrees(double rads){
+    	return rads * (180.0 /Math.PI);
+    }
+    public static double turnControlSmoother(double input){
+    	double val = Math.abs(input);
+        double p1 =     3.036;
+        double p2 =     -3.829;
+        double p3 =     1.945;
+        double p4 =     -0.1536;
+        double result = (p1*Math.pow(val, 3)) + (p2*Math.pow(val, 2))  + (p3*val) + p4;
+        if(input > 0.2)
+     	   return result;
+        if(input < -0.2)
+     	   return -result;
+        else
+     	   return 0;
+    	
+    }
 }
