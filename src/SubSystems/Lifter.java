@@ -3,13 +3,14 @@ package SubSystems;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 	
 public class Lifter{
 	private static Lifter instance;
-	private Victor drive;
+	private VictorSP drive;
 	private DigitalInput loadingPoint;
+	private DigitalInput topLimit;
 	private boolean loading = false;
 	private boolean waitingForReturn = false;
 	private State currentState = State.WAITING;
@@ -32,12 +33,13 @@ public class Lifter{
 	}
 	public enum State{
 		FORWARD_LOAD, REVERSE_LOAD, REVERSE_WAITING_FOR_RETURN,FORWARD_WAITING_ON_RETURN,FIRST_TRIGGER,
-		WAITING,STOP,REVERSE_OFF_POINT,FORWARD_WAIT_FOR_PASS, REVERSE_WAIT_FOR_PASS,FORWARD_HALF_LIFT,DUMP_AND_REVERSE,FORWARD_LOAD_HALF_WAIT,
-		MANUAL_UP,MANUAL_DOWN
+		WAITING,STOP,REVERSE_OFF_POINT,FORWARD_WAIT_FOR_PASS, REVERSE_WAIT_FOR_PASS,FORWARD_HALF_LIFT,DUMP_AND_WAIT,FORWARD_LOAD_HALF_WAIT,
+		MANUAL_UP,MANUAL_DOWN,TOP_LIMIT
 	}
 	public Lifter(){
-		drive = new Victor(Ports.LIFT);
+		drive = new VictorSP(Ports.LIFT);
 		loadingPoint = new DigitalInput(Ports.LIFTER_LOWER_LIMIT);
+		topLimit = new DigitalInput(Ports.LIFTER_TOP_LIMIT);
 	}
 	public static Lifter getInstance(){
 		if(instance == null){
@@ -106,7 +108,7 @@ public class Lifter{
 			forward();
 			SmartDashboard.putString("LIFT STATE", "FHL");
 			if(!threadRunning){
-				timeout = new liftTimeout(0.35);
+				timeout = new liftTimeout(0.2);
 				timeout.start();
 			}
 			currentState = State.FORWARD_LOAD_HALF_WAIT;
@@ -120,8 +122,8 @@ public class Lifter{
 		case FORWARD_LOAD:
 			SmartDashboard.putString("LIFT STATE", "FL");
 			forward();
-			if(onPoint()){
-				setState(State.STOP);
+			if(pastTop()){
+				setState(State.TOP_LIMIT);
 			}
 		break;
 		case FORWARD_WAITING_ON_RETURN:
@@ -140,8 +142,9 @@ public class Lifter{
 			break;
 		case REVERSE_WAIT_FOR_PASS:
 			SmartDashboard.putString("LIFT STATE", "RWFP");
-			if(onPoint()){
-				currentState = State.REVERSE_OFF_POINT;
+			if(!threadRunning){
+				timeout = new liftTimeout(1.0);
+				timeout.start();
 			}
 			break;
 		case FORWARD_WAIT_FOR_PASS:
@@ -150,7 +153,7 @@ public class Lifter{
 				currentState = State.FORWARD_WAITING_ON_RETURN;
 			}
 			break;
-		case DUMP_AND_REVERSE:
+		case DUMP_AND_WAIT:
 			SmartDashboard.putString("LIFT STATE", "DAR");
 			forward();
 			System.out.println("DUMP&RELEASE1");
@@ -160,12 +163,34 @@ public class Lifter{
 			}
 			System.out.println("DUMP&RELEASE2");
 			break;
+		case TOP_LIMIT:
+			if(onPoint()){
+				setState(State.STOP);
+			}
+			break;
 		}
+		
 		SmartDashboard.putBoolean("LIFTER", onPoint());
 		SmartDashboard.putBoolean("Lift Running", running);
 	}
 	
+	public class dumpThread extends Thread{
+		private double endTime = 0;
+		public dumpThread(double timeout){
+			endTime = timeout;
+		}
+		public void run(){
+			threadRunning = true;
+			Timer.delay(endTime);
+			System.out.println("STOPPING");
+			currentState = Lifter.State.STOP;
+			threadRunning = false;
+		}
+	}
 	private boolean onPoint(){
 		return !loadingPoint.get();
+	}
+	private boolean pastTop(){
+		return !topLimit.get();
 	}
 }

@@ -26,10 +26,10 @@ public class Navigation implements PIDSource{
     private double STARTING_ANGLE_OFFSET = 0.0;
     private Navigation()
     {
-        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,false,1);
+        followerWheelX = new SuperEncoder(Ports.NAV_X_ENC,Ports.NAV_X_ENC+1,true,1);
         followerWheelX.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelX.start();
-        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,false,1);
+        followerWheelY = new SuperEncoder(Ports.NAV_Y_ENC,Ports.NAV_Y_ENC+1,true,1);
         followerWheelY.setDistancePerPulse(Constants.DRIVE_DISTANCE_PER_PULSE);
         followerWheelY.start();
         gyro = new GyroThread();

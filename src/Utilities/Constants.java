@@ -22,8 +22,8 @@ public class Constants {
     public static final double DIST_KFV = 0.0001;
     public static final double DIST_KFA = 0.0001;
     public static final double DIST_MAX_ACCEL = 320.0;
-    public static final double DIST_MAX_VEL = 4800.0;
-    		
+    public static final double DIST_MAX_VEL = 4200.0;
+    public static final double X_MOVE = 4800.0;		
     public static final double DIST_SMALL = 10;
     
     public static final double DISTANCE_TOLERANCE = 2.0; //auton distance pid

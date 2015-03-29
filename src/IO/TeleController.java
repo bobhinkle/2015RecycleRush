@@ -1,9 +1,8 @@
 package IO;import ControlSystem.FSM;
-import ControlSystem.RoboSystem;
 import ControlSystem.FSM.State;
+import ControlSystem.RoboSystem;
 import SubSystems.Lifter;
 import Utilities.Util;
-import edu.wpi.first.wpilibj.Joystick.RumbleType;
 
 /** Handles the input from an xbox controller in order to calculate what the
  *  forebar angles and claw state should be. It is designed to keep the logic for
@@ -82,18 +81,17 @@ public class TeleController
         	robot.intakeRollersReverse();
         }
         //////////////////////////////////////////////////////
-        if(codriver.backButton.isPressed()){  // stop all 
-        	fsm.fsmStopState();
-        	robot.lift.setState(Lifter.State.STOP);
+        if(codriver.backButton.isPressed()){  // stop all         	
         	robot.intakeRollersStop();
+        	robot.elevator.rawPower(0);
         }
         ////////////////////////////////////////////////////////
         if(codriver.startButton.isPressed()){
-        	robot.elevator.resetManualToteCount();
         	fsm.fsmStopState();
+        	robot.lift.setState(Lifter.State.STOP);
         }
         ////////////////////////////////////////////////////////        
-        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.2) {
+        if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.15) {
         	robot.lift.setState(Lifter.State.MANUAL_DOWN);
         }else if(codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) < -0.2){
         	robot.lift.setState(Lifter.State.MANUAL_UP);
@@ -102,9 +100,12 @@ public class TeleController
         }
         ///////////////////////////////////////////////
         if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0.3) {
-            robot.elevator.manualDown(Xbox.LEFT_STICK_Y);
+            robot.elevator.rawPower(-Util.turnControlSmoother(Xbox.LEFT_STICK_Y)*0.2);
         }else if( codriver.getButtonAxis(Xbox.LEFT_STICK_Y) < -0.3){
-        	robot.elevator.manualUp(Xbox.LEFT_STICK_Y);
+        	robot.elevator.rawPower(Util.turnControlSmoother(Xbox.LEFT_STICK_Y)*0.2);
+        }else{
+        	if(!robot.elevator.bummping())
+        		robot.elevator.rawPower(0);
         }
         ///////////////////////////////////////////////
         if(codriver.leftCenterClick.isPressed()){
@@ -122,9 +123,6 @@ public class TeleController
         	robot.elevator.decreaseManualToteCount();
         	fsm.setGoalState(FSM.State.MANUAL_TOTE);
         }
-        if((robot.elevator.lineBreakTrigger() || codriver.getPOV() == 90) && fsm.getCurrentState() == FSM.State.RC_LOAD_WAITING){
-        	fsm.setGoalState(FSM.State.RC_INTAKING);
-        }
     }
     
     public void driver() {
@@ -132,9 +130,9 @@ public class TeleController
     	if(driver.aButton.isPressed()){       
     		robot.dt.setHeading(180);
         }else if(driver.bButton.isPressed()){  
-        	robot.dt.setHeading(90);
+        	robot.dt.setHeading(20);
         }else if(driver.xButton.isPressed()){
-        	robot.dt.setHeading(-90);
+        	robot.dt.setHeading(-20);
         }else if(driver.yButton.isPressed()){
         	robot.dt.setHeading(0);
         }else{

@@ -5,7 +5,7 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.TrajectorySmoother;
 import Utilities.Util;
-import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveTrain{
@@ -26,6 +26,7 @@ public class DriveTrain{
 	public DistanceController distance;
 	private boolean useHeadingController = false;
 	private boolean useDistanceController = false;
+	private boolean useTurnController = false;
 	private boolean setHeading = false;
 	private boolean turn45 = false;
 	private double headingControllerInput = 0;
@@ -68,8 +69,8 @@ public class DriveTrain{
 	public void sendInput(double x, double y, double rotate,boolean halfPower,boolean robotCentric,boolean bypassHeadingController){
 		double angle = nav.getRawHeading()/180.0*Math.PI;
 		if(!halfPower){
-			y = y * 0.6;
-			x = x * 0.6;
+			y = y * 0.5;
+			x = x * 0.5;			
 		}
 		if(robotCentric){
 			xInput = x;
@@ -93,8 +94,10 @@ public class DriveTrain{
 				if(bypassHeadingController){
 					rotateInput = rotate;
 				}else{
-					heading.run();
-					rotateInput = Util.turnControlSmoother(headingControllerInput);
+					if(heading.onTarget()){
+						heading.run();
+						rotateInput = Util.turnControlSmoother(headingControllerInput);	
+					}
 				}
 			}			
 		}
@@ -128,8 +131,8 @@ public class DriveTrain{
 	}
 	private class SwerveDriveModule extends SynchronousPID implements Controller{
 		private MA3 rotationMA3;
-		private Victor rotationMotor;
-		private Victor driveMotor;
+		private VictorSP rotationMotor;
+		private VictorSP driveMotor;
 		private int moduleID;
 		private String dashboardNameAngle;
 		private String dashboardNamePower;
@@ -139,8 +142,8 @@ public class DriveTrain{
 		public SwerveDriveModule(int ma3,int rotationMotorPort, int driveMotorPort,int moduleNum){
 			loadProperties();
 			rotationMA3 = new MA3(ma3);
-			rotationMotor = new Victor(rotationMotorPort);
-			driveMotor = new Victor(driveMotorPort);
+			rotationMotor = new VictorSP(rotationMotorPort);
+			driveMotor = new VictorSP(driveMotorPort);
 			moduleID = moduleNum;
 			dashboardNameAngle = "WheelAngle" + Integer.toString(moduleID);
 			dashboardNamePower = "WheelRotationPower" + Integer.toString(moduleID);
@@ -283,6 +286,8 @@ public class DriveTrain{
 	    private int onTargetCounter = onTargetThresh;
 	    private static final double kOnTargetToleranceDegrees = Constants.DISTANCE_TOLERANCE;
 	    private Axis motion = Axis.Y;
+	    private double maxVelocity = 0.0;
+	    private double maxAccel	   = 0.0;
 	    public DistanceController()
 	    {
 	    	loadProperties();
@@ -317,7 +322,7 @@ public class DriveTrain{
 	        double position = this.getSetpoint() - current;
 	        double velocity = (current- lastDistance) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
-	        double output = this.calculate(this.getSetpoint(), Constants.DIST_MAX_VEL, Constants.DIST_MAX_ACCEL, current, velocity, 1.0/kLoopRate);
+	        double output = this.calculate(this.getSetpoint(), this.maxVelocity, this.maxAccel, current, velocity, 1.0/kLoopRate);
 	        if(current > this.getSetpoint() && motion == Axis.X){
 	        	output = -output;
 	        }
@@ -357,8 +362,6 @@ public class DriveTrain{
 		        xInput = (y * Math.sin(angle)) + (x * Math.cos(angle));
 				yInput = (-y * Math.cos(angle)) + (x * Math.sin(angle));
 				rotateInput = headingControllerInput;
-//		        xInput = x;
-//		        yInput = -y;
 				turn45 = true;
 		        SmartDashboard.putNumber("X InputD", xInput);
 				SmartDashboard.putNumber("Y InputD", yInput);
@@ -367,6 +370,10 @@ public class DriveTrain{
 	        }	        
 	        lastDistance = current;
 	        SmartDashboard.putNumber("D_VELOCIY", velocity);
+	    }
+	    public void setMaxVelAcell(double vel, double acel){
+	    	this.maxVelocity = vel;
+	    	this.maxAccel = acel;
 	    }
 	    public final void loadProperties()
 	    {
@@ -377,6 +384,8 @@ public class DriveTrain{
 	        double kfv = Constants.DIST_KFV;
 	        setParams(kp, ki, kd, kfv, kfa);
 	        trajectory = new TrajectorySmoother(Constants.DIST_MAX_ACCEL,Constants.DIST_MAX_VEL);
+	        this.maxVelocity = Constants.DIST_MAX_VEL;
+	        this.maxAccel = Constants.DIST_MAX_ACCEL;
 	        this.setOutputRange(-1.0, 1.0);
 	    }
 		@Override
@@ -390,9 +399,10 @@ public class DriveTrain{
 	    public static final double kLoopRate = 200.0;
 	    private double lastHeading = 0;
 	    private TrajectorySmoother trajectory;
-	    private static final int onTargetThresh = 1;
+	    private static final int onTargetThresh = 10;
 	    private int onTargetCounter = onTargetThresh;
 	    private static final double kOnTargetToleranceDegrees = Constants.TURN_ON_TARGET_DEG;
+	    private boolean isOnTarget = false;
 	    
 	    public HeadingController()
 	    {
@@ -402,6 +412,7 @@ public class DriveTrain{
 	    {
 	    	reset();
 	    	this.setSetpoint(goalAngle);
+	    	useHeadingController = false;
 	    }
 	    
 	    public synchronized void reset()
@@ -409,6 +420,7 @@ public class DriveTrain{
 	        lastHeading = nav.getRawHeading();
 	        this.setSetpoint(lastHeading);
 	        onTargetCounter = onTargetThresh;
+	        isOnTarget = false;
 	    }
 	    public synchronized double getError(){
 	    	return nav.getRawHeading() - this.getSetpoint();
@@ -420,21 +432,18 @@ public class DriveTrain{
 	        double velocity = Util.getDifferenceInAngleDegrees(current, lastHeading) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
 	        double output = this.calculate(current);
-	        if(!Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees))
+	        if(Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees) || isOnTarget)
 	        {
-	        	/*
-	        	if(current < this.getSetpoint())
-	        		rotateInput = output;
-	        	else{
-	        		rotateInput = -output;
-	        	}*/
-	        	headingControllerInput = output;
-	            onTargetCounter = onTargetThresh;
+	        	if(onTarget())
+	                isOnTarget = true;
+	        	else
+	        		onTargetCounter--;
+	            headingControllerInput = 0;
 	        }
 	        else
 	        {
-	            onTargetCounter--;
-	            headingControllerInput = 0;
+	        	headingControllerInput = output;
+	            onTargetCounter = onTargetThresh;
 	        }
 	        lastHeading = current;
 	        SmartDashboard.putNumber("T_DIFF", position);
@@ -451,7 +460,7 @@ public class DriveTrain{
 	        double kfv = Constants.TURN_KFV;
 	        this.setPID(kp, ki, kd);
 	        trajectory = new TrajectorySmoother(Constants.TURN_MAX_ACCEL,Constants.TURN_MAX_VEL);
-	        this.setOutputRange(-1.0, 1.0);
+	        this.setOutputRange(-0.5, 0.5);
 	    }
 		@Override
 		public boolean onTarget() {

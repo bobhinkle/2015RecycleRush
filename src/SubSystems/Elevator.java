@@ -1,12 +1,12 @@
 package SubSystems;
 
-import Sensors.IRProximity;
 import Sensors.SuperEncoder;
 import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -16,7 +16,6 @@ public class Elevator extends SynchronousPID implements Controller
     private SuperEncoder eleEnc;
     private DigitalInput lowerLimitSwitch;
     private DigitalInput upperLimitSwitch;
-    private IRProximity lineBreak;
     private DigitalInput toteBumperSwitch;
     private double goalPosition;
     private boolean isOnTarget = false;
@@ -27,6 +26,9 @@ public class Elevator extends SynchronousPID implements Controller
     private int toteCounter = 0;
     private int manualToteCount = 0;
     private Solenoid topStackHooks;
+    private boolean threadRunning = false;
+    private dumpThread downBump;
+    private upThread upBump;
     public static Elevator getInstance()
     {
         if( instance == null )
@@ -42,7 +44,6 @@ public class Elevator extends SynchronousPID implements Controller
         eleEnc.setPIDReturn(SuperEncoder.PID_DISTANCE);
         eleEnc.setDistancePerPulse(Constants.ELEVATOR_DISTANCE_PER_PULSE);
         eleEnc.start();
-        lineBreak = new IRProximity(Ports.REAR_LINE_BREAK);
         toteBumperSwitch = new DigitalInput(Ports.TOTE_BUMPER);
         lowerLimitSwitch = new DigitalInput(Ports.ELEVATOR_BOTTOM_LIMIT);
         upperLimitSwitch = new DigitalInput(Ports.ELEVATOR_TOP_LIMIT);
@@ -111,9 +112,6 @@ public class Elevator extends SynchronousPID implements Controller
     public boolean toteOnBumper(){
     	return !toteBumperSwitch.get();
     }
-    public boolean lineBreakTrigger(){
-    	return lineBreak.getDistance() > 2.2;
-    }
     public void closeTopStackHook(){
     	topStackHooks.set(true);
     }
@@ -159,6 +157,15 @@ public class Elevator extends SynchronousPID implements Controller
         }else{
             this.setGoal(Util.limit(this.goalPosition + inches, Constants.ELEVATOR_MIN_HEIGHT, Constants.ELEVATOR_MAX_HEIGHT));
         }        
+    }
+    public void rawPower(double power){
+    	if(power > 0 && upperLimitSwitch.get())
+    		drive.set(power);
+    	else if(power < 0 && lowerLimitSwitch.get()){
+    		drive.set(power);
+    	}else{
+    		drive.set(0);
+    	}
     }
     public void manualUp(double height){
     	this.setGoal(this.getSetpoint() + (height * 2.0));
@@ -227,7 +234,6 @@ public class Elevator extends SynchronousPID implements Controller
         SmartDashboard.putNumber("ELE_P", this.getP());
         SmartDashboard.putNumber("ELE_I", this.getI());
         SmartDashboard.putNumber("ELE_D", this.getD());
-        SmartDashboard.putNumber("LINE_BREAK", this.lineBreak.getDistance());
         SmartDashboard.putBoolean("TOTE_BUMPER", toteOnBumper());
         SmartDashboard.putBoolean("bottomHall", lowerLimitSwitch.get());
         SmartDashboard.putBoolean("TopSwitch", upperLimitSwitch.get());
@@ -291,4 +297,45 @@ public class Elevator extends SynchronousPID implements Controller
         
     	drive.set(-power);
     }
+    public boolean bummping(){
+    	return threadRunning;
+    }
+    public void downBump(double timeout){
+    	downBump = new dumpThread(timeout);
+    	downBump.start();
+    }
+    public class dumpThread extends Thread{
+		private double endTime = 0;
+		public dumpThread(double timeout){
+			endTime = timeout;
+		}
+		public void run(){
+			threadRunning = true;
+			System.out.println("BUMPING");
+			rawPower(-0.5);
+			Timer.delay(endTime);
+			rawPower(0);
+			System.out.println("STOPPING");
+			threadRunning = false;
+		}
+	}
+    public void upBump(double timeout){
+    	upBump = new upThread(timeout);
+    	upBump.start();
+    }
+    public class upThread extends Thread{
+		private double endTime = 0;
+		public upThread(double timeout){
+			endTime = timeout;
+		}
+		public void run(){
+			threadRunning = true;
+			System.out.println("BUMPING");
+			rawPower(1.0);
+			Timer.delay(endTime);
+			rawPower(0);
+			System.out.println("STOPPING");
+			threadRunning = false;
+		}
+	}
 }

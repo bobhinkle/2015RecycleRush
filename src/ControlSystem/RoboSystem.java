@@ -1,7 +1,6 @@
 
 package ControlSystem;
 
-import Sensors.Arduino;
 import SubSystems.DriveTrain;
 import SubSystems.Elevator;
 import SubSystems.Lifter;
@@ -17,12 +16,12 @@ public class RoboSystem{
     private static RoboSystem instance = null;
     private Compressor comp;
     public DriveTrain dt;
-    public Arduino ahrs;
     public Elevator elevator;
     private Intake intake;
     private Solenoid follower_wheel;
     private Solenoid latchRelease;
     public Lifter lift;
+    private VictorSP port11;
     public static RoboSystem getInstance()
     {
         if( instance == null )
@@ -34,13 +33,13 @@ public class RoboSystem{
     	comp = new Compressor(0);
     	comp.setClosedLoopControl(true);
     	dt = DriveTrain.getInstance();
-    	ahrs = Arduino.getInstance();
     	elevator = Elevator.getInstance();
     	intake = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER);
     	totePush = new Solenoid(Ports.TOTEPUSH);
     	follower_wheel = new Solenoid(Ports.FOLLOWER_WHEEL);
     	latchRelease = new Solenoid(Ports.LATCHRELEASE);
     	lift = Lifter.getInstance();
+    	port11 = new VictorSP(10);
     }
     public void extendFollowerWheel(){
     	follower_wheel.set(true);

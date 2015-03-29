@@ -171,15 +171,18 @@ public class FSM {
             case LOAD_TOTE:   //START LOAD TOTE SEQUENCE STEP 1
             	SmartDashboard.putString("FSM_STATE", "BOTTOM");
             	System.out.println("LOAD_TOTE");
-            	if(robot.lift.getState() == Lifter.State.WAITING && !robot.lift.threadRunning()){
+            	if(robot.lift.getState() == Lifter.State.TOP_LIMIT){
+            		robot.elevator.downBump(0.18);
             		setGoalState(State.LOAD_TOTE_WAITING);
             	}
+            	
             	break;
             case LOAD_TOTE_WAITING: //LOAD TOTE SEQUENCE STEP 2
             	SmartDashboard.putString("FSM_STATE", "LOAD_TOTE_WAITING");
             	System.out.println("LOAD_TOTE_WAITING");
-        		
-        		setGoalState(State.LOAD_TOTE_STATIONARY_WAITING);
+            	if(robot.lift.getState() == Lifter.State.WAITING && !robot.lift.threadRunning()){
+            		setGoalState(State.LOAD_TOTE_STATIONARY_WAITING);
+            	}
             	break;
             case LOAD_TOTE_STATIONARY_WAITING: //LOAD TOTE SEQUENCE STEP 3
             	SmartDashboard.putString("FSM_STATE", "LOAD_TOTE_STAT"); 
@@ -206,6 +209,7 @@ public class FSM {
             	setGoalState(State.INTAKING_TOTE);
             	break;
             case INTAKING_TOTE:
+ //           	robot.elevator.rawPower(-0.05);
             	SmartDashboard.putString("FSM_STATE", "INTAKING TOTE");
             	if(robot.elevator.toteOnBumper() || bypassState){
             		setGoalState(State.LOAD_TOTE);
@@ -219,7 +223,7 @@ public class FSM {
             		robot.elevator.increaseToteCount();            		
             	}else{
             		stateComplete(State.INTAKING_TOTE);
-            	}
+            	}            	
             	break;
             case SCORING:
             	robot.elevator.setOnTargetThreshHold(20);
@@ -274,13 +278,13 @@ public class FSM {
             	break;
             case LOWER_TO_DROP_TOTES:
             	robot.openArm();
-            	robot.lift.setState(Lifter.State.DUMP_AND_REVERSE);		
+            	robot.lift.setState(Lifter.State.DUMP_AND_WAIT);		
             	setGoalState(State.DROP_TOTES);
             	break;
             case DROP_TOTES:
             	if(robot.lift.getState() == Lifter.State.WAITING){
 					robot.retractlatchRelease();
-					Timer.delay(0.2);
+					Timer.delay(0.35);
 					robot.lift.reverse();
 					robot.lift.setState(Lifter.State.REVERSE_WAIT_FOR_PASS);
                 	totePushDelayStart = System.currentTimeMillis() + totePushDelay;                	
@@ -290,7 +294,6 @@ public class FSM {
             case PUSH_TOTES_AFTER_DROP:
             	if(System.currentTimeMillis() > totePushDelayStart){
             		robot.openArm();
-	        		robot.intakeRollersReverse();
 	        		robot.lift.clearHalfLoad();
 	        		setGoalState(State.TOTE_DROP_WAIT_FOR_COMPLETION);
             	}

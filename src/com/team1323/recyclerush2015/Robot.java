@@ -7,6 +7,7 @@ import IO.TeleController;
 import SubSystems.DriveTrain.Axis;
 import SubSystems.Lifter;
 import SubSystems.Navigation;
+import Utilities.Constants;
 import edu.wpi.first.wpilibj.SampleRobot;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -30,12 +31,20 @@ public class Robot extends SampleRobot {
     public void autonomous() {
     	State autonSelect = State.THREE_TOTE;
     	nav.resetRobotPosition(0, 0, 0, true);
-    	robot.dt.heading.setGoal(-6);
     	double timeout = 0;
     	double timeout2;
     	switch(autonSelect){
     		case TOTE_GRABBER:
-    			
+    			fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
+	    		Timer.delay(0.25);
+    			robot.elevator.downBump(0.15);
+	    		Timer.delay(0.35);
+	    		robot.elevator.upBump(0.25);
+	    		Timer.delay(0.25);
+	    		double timerout = System.currentTimeMillis() + 1000;
+	    		while(isAutonomous() && timerout > System.currentTimeMillis()){
+	    			robot.dt.sendInput(0.0, 0.55, 0, false, false,false);
+	    		}
     		break;
     		case LAST_TOTE_STRAFE:
     			if(isAutonomous()){
@@ -121,13 +130,7 @@ public class Robot extends SampleRobot {
 	    		fsm.setGoalState(FSM.State.PRE_TOTE);8*/
     		break;	
     		case NO_TOTE:
-    			fsm.lastTote();
-    			fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);
-    			Timer.delay(2);
-    			while(robot.lift.getState() != Lifter.State.WAITING){
-	    			Timer.delay(0.001);
-	    		}
-    			fsm.clearLastTote();
+    			
     		break;
 	    	case THREE_TOTE:
 	    		//Step 1
@@ -135,69 +138,88 @@ public class Robot extends SampleRobot {
 	    		fsm.clearLastTote();
     			System.out.println("1");
     			fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);
-	    		while(robot.lift.getState() != Lifter.State.WAITING){
-	    			Timer.delay(0.001);
+	    		while(robot.lift.getState() != Lifter.State.FORWARD_LOAD){
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.intakeRollersStop();
 	    		Timer.delay(0.1);
 	    		robot.dt.driveDistanceHoldingHeading(13.0,Axis.X,0.0,false,1000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.intakeRollersReverse();
 	    		robot.dt.driveDistanceHoldingHeading(35.0,Axis.Y,0.0,false,3000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.dt.sendInput(0, 0, 0, true, false, true);
+	    		robot.dt.distance.setMaxVelAcell(Constants.X_MOVE, 320);
 	    		robot.dt.driveDistanceHoldingHeading(-6.0,Axis.X,0.0,false,3000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.dt.driveDistanceHoldingHeading(0.0,Axis.X,0.0,false,3000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.dt.sendInput(0, 0, 0, true, false, true);
+	    		robot.dt.distance.setMaxVelAcell(Constants.DIST_MAX_VEL, 320);
 	    		fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);	    		
 	    		robot.dt.driveDistanceHoldingHeading(70.0,Axis.Y,0.0,false,3000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		Timer.delay(0.1);
-	    		robot.dt.driveDistanceHoldingHeading(15.0,Axis.X,0.0,false,3000,false);
+	    		robot.dt.distance.setMaxVelAcell(Constants.X_MOVE, 320);
+	    		robot.dt.driveDistanceHoldingHeading(20.0,Axis.X,-6.0,false,1500,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
-	    		robot.dt.driveDistanceHoldingHeading(120.0,Axis.Y,0.0,false,3000,false);
+	    		robot.dt.distance.setMaxVelAcell(Constants.DIST_MAX_VEL, 320);
+	    		robot.dt.driveDistanceHoldingHeading(124.0,Axis.Y,0.0,false,2000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){	    			
 	    			Timer.delay(0.01);
 	    		}
 	    		robot.dt.sendInput(0, 0, 0, true, false, true);
-	    		robot.dt.driveDistanceHoldingHeading(-6.0,Axis.X,0.0,false,2500,false);
+	    		robot.dt.distance.setMaxVelAcell(Constants.X_MOVE, 320);
+	    		robot.dt.driveDistanceHoldingHeading(-12.0,Axis.X,0.0,false,1000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
-	    		robot.dt.driveDistanceHoldingHeading(0.0,Axis.X,0.0,false,2000,false);
+	    		robot.dt.driveDistanceHoldingHeading(-4.0,Axis.X,0.0,false,1000,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
 	    			Timer.delay(0.001);
 	    		}
 	    		robot.dt.sendInput(0, 0, 0, true, false, true);
+	    		robot.dt.distance.setMaxVelAcell(Constants.DIST_MAX_VEL, 320);
 	    		fsm.lastTote();
 	    		fsm.setGoalState(FSM.State.WAITING_FOR_TOTE);	    		
-	    		robot.dt.driveDistanceHoldingHeading(168.0,Axis.Y,0.0,false,2000,false);
+	    		robot.dt.driveDistanceHoldingHeading(165.0,Axis.Y,0.0,false,2500,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
-	    		robot.dt.driveDistanceHoldingHeading(85.0,Axis.X,0.0,false,2000,false);
+	    		robot.dt.distance.setMaxVelAcell(4500, 320);
+	    		robot.dt.driveDistanceHoldingHeading(85.0,Axis.X,0.0,false,2500,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
 	    		}
 	    		robot.dt.sendInput(0, 0, 0, true, false, true);
-	    		fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
-	    		robot.dt.driveDistanceHoldingHeading(0.0,Axis.Y,0.0,false,3000,false);
+	    		nav.resetRobotPosition(0, 0, 0, true);
+	    		/*fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
+	    		
+	    		robot.dt.driveDistanceHoldingHeading(-30.0,Axis.Y,0.0,false,2500,false);
 	    		while(robot.dt.runDC() && isAutonomousKill()){
-	    			Timer.delay(0.001);
+	    			Timer.delay(0.01);
+	    		}*/
+	    		fsm.setGoalState(FSM.State.LOWER_TO_DROP_TOTES);
+	    		Timer.delay(0.25);
+    			robot.elevator.downBump(0.15);
+	    		Timer.delay(0.35);
+	    		robot.elevator.upBump(0.25);
+	    		Timer.delay(0.25);
+	    		double timerrout = System.currentTimeMillis() + 3000;
+	    		while(isAutonomous() && timerrout > System.currentTimeMillis()){
+	    			robot.dt.sendInput(0.0, 0.55, 0, false, false,false);
 	    		}
 	    		robot.intakeRollersStop();
 	    		fsm.clearLastTote();
