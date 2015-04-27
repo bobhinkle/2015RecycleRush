@@ -16,17 +16,18 @@ public class Constants {
     public static final double STEERING_D = 0.0;  //0.0
     public static final double INPUT_DELAY = 0.25;
     
-    public static final double DIST_KP = 0.005;
+    public static final double DIST_KP = 0.2;
     public static final double DIST_KI = 0.00; 
-    public static final double DIST_KD = 0.000;
+    public static final double DIST_KD = 0.00;
     public static final double DIST_KFV = 0.0001;
     public static final double DIST_KFA = 0.0001;
-    public static final double DIST_MAX_ACCEL = 320.0;
-    public static final double DIST_MAX_VEL = 4200.0;
-    public static final double X_MOVE = 4800.0;		
+    public static final double DIST_MAX_ACCEL = 20.0;
+    public static final double DIST_MAX_VEL = 500.0;
+    public static final double X_MOVE = 500.0;	
+    public static final double X_MOVE_ACCEL = 20.0;
     public static final double DIST_SMALL = 10;
     
-    public static final double DISTANCE_TOLERANCE = 2.0; //auton distance pid
+    public static final double DISTANCE_TOLERANCE = 1.0; //auton distance pid
     
     public static final double TURN_KP = 0.02; //0.020
     public static final double TURN_KI = 0.00;
@@ -62,6 +63,22 @@ public class Constants {
     public static final double TOTE_3				 = 27.0;
     public static final double TOTE_4				 = 33.0;
     /////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final double CAN_MAX_HEIGHT = 345.0;
+    public static final double CAN_MIN_HEIGHT = 194.0;
+    public static final double CAN_P = 0.05;
+    public static final double CAN_I = 0.000;
+    public static final double CAN_D = 0.0;
+    public static final double CAN_DOWN_P = 0.035;
+    public static final double CAN_DOWN_I = 0.00;
+    public static final double CAN_DOWN_D = 0.00;
+    public static final double CAN_MIN_POWER = -1.0;
+    public static final double CAN_MAX_POWER = 0.8;
+    public static final double CAN_TOLERANCE = 2.0;
+    public static final double CAN_LOAD = 194.0;
+    public static final double CAN_TOP = 344.0;
+    
+    
+    /////////////////////////////////////////////////////////////////////////
     public static final double DRIVE_DISTANCE_PER_PULSE = 0.008607439 * 2;      //0.03420833;
     public static final double VOLTS_TO_PSI = 53.18;
     
@@ -70,6 +87,14 @@ public class Constants {
     
     public static final double WHEELBASE_LENGTH = 33.1625;
     public static final double WHEELBASE_WIDTH  = 21.5;
+    
+    public static final double LIFT_MAX_DISTANCE = 3100.0;
+    public static final double LIFT_BOTTOM_CLEAR = 10.0;
+    public static final double LIFT_TOP_CLEAR    = 1650.0;
+    public static final double LIFT_HALF_LOAD    = 200.0;
+    public static final double LIFT_DELATCH      = 800.0;
+    public static final double LIFT_LOWER_STOP   = 2300.0;
+    public static final double LIFT_REVERSE_OFF  = -100.0;
     
     public static final double POWER_STALL = 10.0;
 }

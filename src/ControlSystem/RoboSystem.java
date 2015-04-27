@@ -1,8 +1,8 @@
 
 package ControlSystem;
 
+import SubSystems.CanLift;
 import SubSystems.DriveTrain;
-import SubSystems.Elevator;
 import SubSystems.Lifter;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.Compressor;
@@ -10,18 +10,16 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.VictorSP;
 
 public class RoboSystem{
-	private Solenoid totePush;
-	
-    
     private static RoboSystem instance = null;
     private Compressor comp;
     public DriveTrain dt;
-    public Elevator elevator;
+    public CanLift canLift;
     private Intake intake;
     private Solenoid follower_wheel;
     private Solenoid latchRelease;
+    private Solenoid canGrabber;
+    private Solenoid canGrabberRelease;
     public Lifter lift;
-    private VictorSP port11;
     public static RoboSystem getInstance()
     {
         if( instance == null )
@@ -33,13 +31,21 @@ public class RoboSystem{
     	comp = new Compressor(0);
     	comp.setClosedLoopControl(true);
     	dt = DriveTrain.getInstance();
-    	elevator = Elevator.getInstance();
+    	canLift = CanLift.getInstance();
     	intake = new Intake(Ports.INTAKE_ARM,Ports.INTAKE_ROLLER);
-    	totePush = new Solenoid(Ports.TOTEPUSH);
-    	follower_wheel = new Solenoid(Ports.FOLLOWER_WHEEL);
-    	latchRelease = new Solenoid(Ports.LATCHRELEASE);
+    	follower_wheel = new Solenoid(1,Ports.FOLLOWER_WHEEL);
+    	latchRelease = new Solenoid(1,Ports.LATCHRELEASE);
     	lift = Lifter.getInstance();
-    	port11 = new VictorSP(10);
+    	canGrabber = new Solenoid(0,Ports.CAN_GRABBERS);
+    	canGrabberRelease = new Solenoid(1,Ports.CAN_GRABBER_RELEASE);
+    }
+    public void retractCanGrabber(){
+    	canGrabber.set(false);
+    	canGrabberRelease.set(true);
+    }
+    public void extendCanGrabber(){
+    	canGrabber.set(true);
+    	canGrabberRelease.set(false);
     }
     public void extendFollowerWheel(){
     	follower_wheel.set(true);
@@ -52,12 +58,6 @@ public class RoboSystem{
     		follower_wheel.set(false);
     	else
     		follower_wheel.set(true);
-    }
-    public void extendtotePush(){
-    	totePush.set(true);
-    }
-    public void retracttotePush(){
-    	totePush.set(false);
     }
     public void retractlatchRelease(){
     	System.out.println("RELEASED");
@@ -81,10 +81,10 @@ public class RoboSystem{
     public void actuateArm(){
     	intake.actuateArm();
     }
-    public void openArm(){
+    public void openIntake(){
     	intake.extendArm();
     }
-    public void closeArm(){
+    public void closeIntake(){
     	intake.retractArm();
     }
     private class Intake{
@@ -93,7 +93,7 @@ public class RoboSystem{
     	private boolean intakeExtended = false;
     	
     	public Intake(int armPort, int rollerPort){
-    		arm = new Solenoid(armPort);
+    		arm = new Solenoid(1,armPort);
     		roller = new VictorSP(rollerPort);
     	}
     	

@@ -1,7 +1,9 @@
-package IO;import ControlSystem.FSM;
+package IO;import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import ControlSystem.FSM;
 import ControlSystem.FSM.State;
 import ControlSystem.RoboSystem;
 import SubSystems.Lifter;
+import Utilities.Constants;
 import Utilities.Util;
 
 /** Handles the input from an xbox controller in order to calculate what the
@@ -41,7 +43,7 @@ public class TeleController
         }
         //////////////////////////////////////////
         if(codriver.bButton.isPressed()){
-        	robot.lift.setState(Lifter.State.FORWARD_LOAD);
+        	robot.retractCanGrabber();
         }
         ////////////////////////////////////////
         if(codriver.xButton.isPressed()){
@@ -50,22 +52,12 @@ public class TeleController
         }
         ///////////////////////////////////////
         if(codriver.yButton.isPressed()){
-        	switch(fsm.previousState()){
-        	case RC_LOAD_WAITING:
-        		fsm.setGoalState(State.RC_ARM_CLOSE);
-        		break;
-        	case RC_ARM_CLOSE:
-        		fsm.setGoalState(State.RC_INTAKING);
-        		break;
-        	default:
-        		fsm.setGoalState(FSM.State.RC_LOAD);
-        		break;
-        	}        	
+        	fsm.setGoalState(FSM.State.RC_LOAD);   	
         }
         /////////////////////////////////////////////
 
         if(codriver.rightTrigger.isPressed()){ 
-        	fsm.nextState();
+        	fsm.setGoalState(FSM.State.RC_TOP); 
         }
         //////////////////////////////////
         if(codriver.rightBumper.isPressed()) {
@@ -83,12 +75,12 @@ public class TeleController
         //////////////////////////////////////////////////////
         if(codriver.backButton.isPressed()){  // stop all         	
         	robot.intakeRollersStop();
-        	robot.elevator.rawPower(0);
         }
         ////////////////////////////////////////////////////////
         if(codriver.startButton.isPressed()){
         	fsm.fsmStopState();
         	robot.lift.setState(Lifter.State.STOP);
+        	robot.canLift.rawPower(0);
         }
         ////////////////////////////////////////////////////////        
         if (codriver.getButtonAxis(Xbox.RIGHT_STICK_Y) > 0.15) {
@@ -100,28 +92,25 @@ public class TeleController
         }
         ///////////////////////////////////////////////
         if (codriver.getButtonAxis(Xbox.LEFT_STICK_Y) > 0.3) {
-            robot.elevator.rawPower(-Util.turnControlSmoother(Xbox.LEFT_STICK_Y)*0.2);
+        	
         }else if( codriver.getButtonAxis(Xbox.LEFT_STICK_Y) < -0.3){
-        	robot.elevator.rawPower(Util.turnControlSmoother(Xbox.LEFT_STICK_Y)*0.2);
+        	
         }else{
-        	if(!robot.elevator.bummping())
-        		robot.elevator.rawPower(0);
+        	
         }
         ///////////////////////////////////////////////
         if(codriver.leftCenterClick.isPressed()){
-        	fsm.setGoalState(FSM.State.ZERO_ELEVATOR); //LOAD TOTE SEQUENCE
+        	robot.extendCanGrabber();
         }     
         ///////////////////////////////////////////////
         if(codriver.rightCenterClick.isPressed()) {
-        	fsm.setGoalState(FSM.State.SCORING);
+        	robot.canLift.cycleClapper();
         }
         if(codriver.getPOV() == 0){
-        	robot.elevator.increaseManualToteCount();
-        	fsm.setGoalState(FSM.State.MANUAL_TOTE);
+        	robot.canLift.manualUp(10);
         }
         if(codriver.getPOV() ==180){
-        	robot.elevator.decreaseManualToteCount();
-        	fsm.setGoalState(FSM.State.MANUAL_TOTE);
+        	robot.canLift.manualDown(10);
         }
     }
     
@@ -149,7 +138,7 @@ public class TeleController
         	robotCentric = false;
         }
         ///////////////////////////////////////////////////////
-        if(driver.rightBumper.isPressed()){
+        if(driver.rightBumper.isPressed()){            
         	robotCentric = true;
         }
         
@@ -171,7 +160,10 @@ public class TeleController
         if(driver.getPOV() == 0){
         	
         }
-        
+        if(robotCentric)
+        	SmartDashboard.putString("RobotControl", "ROBOT");
+        else
+            SmartDashboard.putString("RobotControl","FIELD");
     }
     public void update(){
     	codriver.run();

@@ -69,8 +69,11 @@ public class DriveTrain{
 	public void sendInput(double x, double y, double rotate,boolean halfPower,boolean robotCentric,boolean bypassHeadingController){
 		double angle = nav.getRawHeading()/180.0*Math.PI;
 		if(!halfPower){
-			y = y * 0.5;
-			x = x * 0.5;			
+			y = y * 0.4;
+			x = x * 0.4;			
+		}else{
+			y = y * 0.8;
+			x = x * 0.8;
 		}
 		if(robotCentric){
 			xInput = x;
@@ -282,7 +285,7 @@ public class DriveTrain{
 	    public static final double kLoopRate = 200.0;
 	    private double lastDistance = 0;
 	    private TrajectorySmoother trajectory;
-	    private static final int onTargetThresh = 2;
+	    private static final int onTargetThresh = 15;
 	    private int onTargetCounter = onTargetThresh;
 	    private static final double kOnTargetToleranceDegrees = Constants.DISTANCE_TOLERANCE;
 	    private Axis motion = Axis.Y;
@@ -323,8 +326,8 @@ public class DriveTrain{
 	        double velocity = (current- lastDistance) * kLoopRate;
 	        trajectory.update(position, velocity, 0.0, 1.0/kLoopRate);
 	        double output = this.calculate(this.getSetpoint(), this.maxVelocity, this.maxAccel, current, velocity, 1.0/kLoopRate);
-	        if(current > this.getSetpoint() && motion == Axis.X){
-	        	output = -output;
+	        if(current > this.getSetpoint() ){
+//	        	output = -output;
 	        }
 	        if(useDistanceController){
 		        if(!Util.onTarget(this.getSetpoint(),current,kOnTargetToleranceDegrees))
@@ -371,9 +374,10 @@ public class DriveTrain{
 	        lastDistance = current;
 	        SmartDashboard.putNumber("D_VELOCIY", velocity);
 	    }
-	    public void setMaxVelAcell(double vel, double acel){
+	    public void setMaxVelAccel(double vel, double acel){
 	    	this.maxVelocity = vel;
 	    	this.maxAccel = acel;
+	    	trajectory = new TrajectorySmoother(acel,vel);
 	    }
 	    public final void loadProperties()
 	    {
@@ -386,7 +390,7 @@ public class DriveTrain{
 	        trajectory = new TrajectorySmoother(Constants.DIST_MAX_ACCEL,Constants.DIST_MAX_VEL);
 	        this.maxVelocity = Constants.DIST_MAX_VEL;
 	        this.maxAccel = Constants.DIST_MAX_ACCEL;
-	        this.setOutputRange(-1.0, 1.0);
+	        this.setOutputRange(-0.55, 0.5);
 	    }
 		@Override
 		public boolean onTarget() {

@@ -1,5 +1,7 @@
 package SubSystems;
 
+import Sensors.SuperEncoder;
+import Utilities.Constants;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
@@ -10,14 +12,15 @@ public class Lifter{
 	private static Lifter instance;
 	private VictorSP drive;
 	private DigitalInput loadingPoint;
-	private DigitalInput topLimit;
-	private boolean loading = false;
-	private boolean waitingForReturn = false;
 	private State currentState = State.WAITING;
 	private boolean running = false;
 	private liftTimeout timeout;
 	private boolean threadRunning = false;
 	private boolean halfLoaded = false;
+	private boolean lowerPosition = false;
+	private SuperEncoder enc;
+	private double distance = 0.0;
+	private boolean encReset = false;
 	public class liftTimeout extends Thread{
 		private double endTime = 0;
 		public liftTimeout(double timeout){
@@ -39,13 +42,18 @@ public class Lifter{
 	public Lifter(){
 		drive = new VictorSP(Ports.LIFT);
 		loadingPoint = new DigitalInput(Ports.LIFTER_LOWER_LIMIT);
-		topLimit = new DigitalInput(Ports.LIFTER_TOP_LIMIT);
+		enc = new SuperEncoder(Ports.LIFT_ENC,Ports.LIFT_ENC+1,true,SuperEncoder.HIGH_RESOLUTION);
+		enc.start();
 	}
 	public static Lifter getInstance(){
 		if(instance == null){
 			instance = new Lifter();
 		}
 		return instance;
+	}
+	public void reset(){
+		encReset = true;
+		enc.reset();
 	}
 	public boolean halfLoaded(){
 		return halfLoaded;
@@ -73,11 +81,11 @@ public class Lifter{
 	}
 	public void forward(){
 		running = true;
-		drive.set(1);
+		drive.set(1.0);
 	}
 	public void reverse(){
 		running = true;
-		drive.set(-1);
+		drive.set(-0.6);
 	}
 	public void stopLift(){
 		running = false;
@@ -89,6 +97,11 @@ public class Lifter{
 	//hooks wait at the bottom reversed just passed the limit switch. When loading pass the limit switch once then stop on second pass. Then reverse until 
 	//not on switch anymore
 	public void run(){
+		lowerPosition = onBottom();
+		distance = enc.getDistance();
+		if(lowerPosition || (distance > Constants.LIFT_MAX_DISTANCE)){
+			reset();
+		}
 		switch(currentState){
 		case MANUAL_UP:
 			forward();
@@ -107,11 +120,9 @@ public class Lifter{
 		case FORWARD_HALF_LIFT:
 			forward();
 			SmartDashboard.putString("LIFT STATE", "FHL");
-			if(!threadRunning){
-				timeout = new liftTimeout(0.2);
-				timeout.start();
+			if(distance > Constants.LIFT_HALF_LOAD && distance < Constants.LIFT_DELATCH){
+				setState(State.STOP);
 			}
-			currentState = State.FORWARD_LOAD_HALF_WAIT;
 			System.out.println("HALF");
 			break;
 		case FORWARD_LOAD_HALF_WAIT:
@@ -122,13 +133,13 @@ public class Lifter{
 		case FORWARD_LOAD:
 			SmartDashboard.putString("LIFT STATE", "FL");
 			forward();
-			if(pastTop()){
+			if(distance > Constants.LIFT_TOP_CLEAR && distance < Constants.LIFT_LOWER_STOP){
 				setState(State.TOP_LIMIT);
 			}
 		break;
 		case FORWARD_WAITING_ON_RETURN:
 			SmartDashboard.putString("LIFT STATE", "FWONP");
-			if(onPoint()){
+			if(lowerPosition){
 				reverse();
 				currentState = State.REVERSE_OFF_POINT;
 			}
@@ -136,8 +147,8 @@ public class Lifter{
 		case REVERSE_OFF_POINT:
 			SmartDashboard.putString("LIFT STATE", "ROP");
 			reverse();
-			if(onPoint()){
-				currentState = State.STOP;				
+			if(distance < Constants.LIFT_REVERSE_OFF){
+				setState(State.STOP);				
 			}
 			break;
 		case REVERSE_WAIT_FOR_PASS:
@@ -149,29 +160,26 @@ public class Lifter{
 			break;
 		case FORWARD_WAIT_FOR_PASS:
 			SmartDashboard.putString("LIFT STATE", "FWFP");
-			if(!onPoint()){
+			if(!lowerPosition){
 				currentState = State.FORWARD_WAITING_ON_RETURN;
 			}
 			break;
 		case DUMP_AND_WAIT:
-			SmartDashboard.putString("LIFT STATE", "DAR");
+			SmartDashboard.putString("LIFT STATE", "DAW");
 			forward();
-			System.out.println("DUMP&RELEASE1");
-			if(!threadRunning){
-				timeout = new liftTimeout(0.2);
-				timeout.start();
-			}
-			System.out.println("DUMP&RELEASE2");
-			break;
-		case TOP_LIMIT:
-			if(onPoint()){
+			if(distance > Constants.LIFT_DELATCH){
 				setState(State.STOP);
 			}
 			break;
-		}
-		
-		SmartDashboard.putBoolean("LIFTER", onPoint());
+		case TOP_LIMIT:
+			if(distance > Constants.LIFT_LOWER_STOP){
+				setState(State.STOP);
+			}
+			break;
+		}		
+		SmartDashboard.putBoolean("LIFTER", onBottom());
 		SmartDashboard.putBoolean("Lift Running", running);
+		SmartDashboard.putNumber("LIFT_DIST", enc.getDistance());
 	}
 	
 	public class dumpThread extends Thread{
@@ -187,10 +195,7 @@ public class Lifter{
 			threadRunning = false;
 		}
 	}
-	private boolean onPoint(){
+	private boolean onBottom(){
 		return !loadingPoint.get();
-	}
-	private boolean pastTop(){
-		return !topLimit.get();
 	}
 }
